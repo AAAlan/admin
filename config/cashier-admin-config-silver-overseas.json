@@ -1,0 +1,1161 @@
+{
+  "_meta": {
+    "format": "cashier-admin-config",
+    "version": 3,
+    "region": "overseas",
+    "gameId": "Silver",
+    "generatedAt": "2026-04-30T04:11:44.652Z",
+    "description": "Silver 游戏 · 支付中心（海外）静态配置。games.Silver 与侧栏「支付渠道管理 / 支付方式管理 / 支付场景管理」一致；cashier、gameApplications 对应海外侧额外能力。"
+  },
+  "games": {
+    "Silver": {
+      "paymentBasics": {
+        "paymentChannels": [
+          {
+            "channel_id": "adyen_MerchantAccount_Test123",
+            "sdk_app_id": "Silver",
+            "pay_name": "Adyen",
+            "channel_name": "adyen",
+            "merchant_account": "MerchantAccount_Test123",
+            "contract_subject": "Happy Elements Co., Ltd.",
+            "channel_subject": "Adyen N.V.",
+            "public_key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoaL5tFz1rT4Zc4uVRBNeAevTkq0hnViCi44KUxkbqn16jA+Sx71GUsEhxS28i4EKB44ZepsiceFXVP6CVKFfxnRYfcn+HufMz99y5mc1oIbTAz87+jPCCA/lsobGxj3iiLEagtvahH1s8PiKbVDqu2+/690GAnVXzeW31Sk3xJ5IhY1AJOJijf0YxNh1IHOyJCJuRoxU9XwIUpNbThJL0pPu3vahTWvoMeuw3pDheTIen5GyjmfsTHCUFN+G/OQXV8vCAPb7wOMr8wltita/qoQLSnjoaDEUNi9JY51h2ya429Ejb6ZEmwDZ0v8E20zHs/0uEQ4VNgWRoDgx+i87YQIDAQAB",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQChovm0XPWtPhlz\ni5VEE14B69OSrSGdWIKLjgpTGRuqfXqMD5LHvUZSwSHFLbyLgQoHjhl6myJx4VdU\n/oJUoV/GdFh9yf4e58zP33LmZzWghtMDPzv6M8IID+WyhsbGPeKIsRqC29qEfWzw+\nIptUOq7b7/r3QYCdVfN5bfVKTfEnkiFjUAk4mKN/RjE2HUgc7IkIm5GjFT1fAhSk\n1tOEkvSk+7e9qFNa+gx67DekOF5Mh6fkbKKe+xMcJQU34b85BdXy8IA9vvA4yvzC\nW2K1r+qhAtKeOhoMRQ2L0ljnmHbJrjbsSNvpkSbANnS/wTbTMez/S4RDhU2BZGgO\nDH6LzthAgMBAAECggEBAK...\n-----END PRIVATE KEY-----",
+            "status": true
+          },
+          {
+            "channel_id": "stripe_acct_1234567890",
+            "sdk_app_id": "Silver",
+            "pay_name": "Stripe",
+            "channel_name": "stripe",
+            "merchant_account": "acct_1234567890",
+            "contract_subject": "Happy Elements Co., Ltd.",
+            "channel_subject": "Stripe, Inc.",
+            "public_key": "pk_test_51H1234567890abcdefghijklmnopqrstuvwxyz",
+            "private_key": "sk_test_51H1234567890abcdefghijklmnopqrstuvwxyz",
+            "status": true
+          },
+          {
+            "channel_id": "paypal_merchant_paypal_001",
+            "sdk_app_id": "Silver",
+            "pay_name": "PayPal",
+            "channel_name": "paypal",
+            "merchant_account": "merchant_paypal_001",
+            "contract_subject": "Happy Elements Co., Ltd.",
+            "channel_subject": "PayPal Holdings, Inc.",
+            "public_key": "PayPal_Public_Key_1234567890",
+            "private_key": "PayPal_Private_Key_1234567890",
+            "status": true
+          }
+        ],
+        "channelTemplates": [
+          {
+            "channel_name": "adyen",
+            "display_name": "Adyen",
+            "parameters": [
+              {
+                "key": "api_key",
+                "label": "API Key",
+                "type": "text",
+                "required": true,
+                "description": "Adyen API Key"
+              },
+              {
+                "key": "merchant_account",
+                "label": "Merchant Account",
+                "type": "text",
+                "required": true,
+                "description": "商户账户"
+              },
+              {
+                "key": "public_key",
+                "label": "Public Key",
+                "type": "textarea",
+                "required": true,
+                "description": "公钥"
+              },
+              {
+                "key": "private_key",
+                "label": "Private Key",
+                "type": "textarea",
+                "required": true,
+                "description": "私钥"
+              }
+            ]
+          },
+          {
+            "channel_name": "stripe",
+            "display_name": "Stripe",
+            "parameters": [
+              {
+                "key": "publishable_key",
+                "label": "Publishable Key",
+                "type": "text",
+                "required": true,
+                "description": "可发布的密钥（pk_开头）"
+              },
+              {
+                "key": "secret_key",
+                "label": "Secret Key",
+                "type": "textarea",
+                "required": true,
+                "description": "密钥（sk_开头）"
+              }
+            ]
+          },
+          {
+            "channel_name": "paypal",
+            "display_name": "PayPal",
+            "parameters": [
+              {
+                "key": "client_id",
+                "label": "Client ID",
+                "type": "text",
+                "required": true,
+                "description": "PayPal Client ID"
+              },
+              {
+                "key": "client_secret",
+                "label": "Client Secret",
+                "type": "textarea",
+                "required": true,
+                "description": "PayPal Client Secret"
+              },
+              {
+                "key": "public_key",
+                "label": "Public Key",
+                "type": "textarea",
+                "required": false,
+                "description": "公钥（可选）"
+              },
+              {
+                "key": "private_key",
+                "label": "Private Key",
+                "type": "textarea",
+                "required": false,
+                "description": "私钥（可选）"
+              }
+            ]
+          }
+        ],
+        "paymentMethods": [
+          {
+            "id": 1,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "VISA",
+            "channel_ids": [
+              "adyen_MerchantAccount_Test123"
+            ],
+            "channel_id": "adyen_MerchantAccount_Test123",
+            "icon_url": "https://cdn.example.com/payment-icons/visa.png",
+            "status": "enabled"
+          },
+          {
+            "id": 2,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "AMEX",
+            "channel_ids": [
+              "adyen_MerchantAccount_Test123"
+            ],
+            "channel_id": "adyen_MerchantAccount_Test123",
+            "icon_url": "https://cdn.example.com/payment-icons/amex.png",
+            "status": "enabled"
+          },
+          {
+            "id": 3,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "VISA",
+            "channel_ids": [
+              "stripe_acct_1234567890"
+            ],
+            "channel_id": "stripe_acct_1234567890",
+            "icon_url": "https://cdn.example.com/payment-icons/visa.png",
+            "status": "enabled"
+          },
+          {
+            "id": 4,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "AMEX",
+            "channel_ids": [
+              "stripe_acct_1234567890"
+            ],
+            "channel_id": "stripe_acct_1234567890",
+            "icon_url": "https://cdn.example.com/payment-icons/amex.png",
+            "status": "enabled"
+          },
+          {
+            "id": 5,
+            "sdk_app_id": "Silver",
+            "pay_name": "PayPal",
+            "selectedCardBrand": "",
+            "channel_ids": [
+              "paypal_merchant_paypal_001"
+            ],
+            "channel_id": "paypal_merchant_paypal_001",
+            "icon_url": "https://cdn.example.com/payment-icons/paypal.png",
+            "status": "enabled"
+          },
+          {
+            "id": 6,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "VISA",
+            "channel_ids": [
+              "antom_antom_merchant_001"
+            ],
+            "channel_id": "antom_antom_merchant_001",
+            "icon_url": "https://cdn.example.com/payment-icons/visa.png",
+            "status": "enabled"
+          },
+          {
+            "id": 7,
+            "sdk_app_id": "Silver",
+            "pay_name": "DANA",
+            "selectedCardBrand": "",
+            "channel_ids": [
+              "antom_antom_merchant_001"
+            ],
+            "channel_id": "antom_antom_merchant_001",
+            "icon_url": "https://cdn.example.com/payment-icons/dana.png",
+            "status": "enabled"
+          },
+          {
+            "id": 8,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "VISA",
+            "channel_ids": [
+              "payermax_payermax_merchant_001"
+            ],
+            "channel_id": "payermax_payermax_merchant_001",
+            "icon_url": "https://cdn.example.com/payment-icons/visa.png",
+            "status": "enabled"
+          },
+          {
+            "id": 9,
+            "sdk_app_id": "Silver",
+            "pay_name": "CARD",
+            "selectedCardBrand": "AMEX",
+            "channel_ids": [
+              "payermax_payermax_merchant_001"
+            ],
+            "channel_id": "payermax_payermax_merchant_001",
+            "icon_url": "https://cdn.example.com/payment-icons/amex.png",
+            "status": "enabled"
+          },
+          {
+            "id": 10,
+            "sdk_app_id": "Silver",
+            "pay_name": "MyCard",
+            "selectedCardBrand": "",
+            "channel_ids": [
+              "mycard_mycard_merchant_001"
+            ],
+            "channel_id": "mycard_mycard_merchant_001",
+            "icon_url": "https://cdn.example.com/payment-icons/mycard.png",
+            "status": "enabled"
+          }
+        ],
+        "currencies": [
+          {
+            "code": "USD",
+            "name": "美元 (US Dollar)"
+          },
+          {
+            "code": "CNY",
+            "name": "人民币 (Chinese Yuan)"
+          },
+          {
+            "code": "EUR",
+            "name": "欧元 (Euro)"
+          },
+          {
+            "code": "GBP",
+            "name": "英镑 (British Pound)"
+          },
+          {
+            "code": "JPY",
+            "name": "日元 (Japanese Yen)"
+          },
+          {
+            "code": "KRW",
+            "name": "韩元 (Korean Won)"
+          },
+          {
+            "code": "CAD",
+            "name": "加元 (Canadian Dollar)"
+          },
+          {
+            "code": "AUD",
+            "name": "澳元 (Australian Dollar)"
+          }
+        ],
+        "languages": [
+          {
+            "code": "en",
+            "name": "English"
+          },
+          {
+            "code": "zh",
+            "name": "中文"
+          },
+          {
+            "code": "ja",
+            "name": "日本語"
+          },
+          {
+            "code": "ko",
+            "name": "한국어"
+          }
+        ]
+      },
+      "scenarioPlatform": {
+        "scenarios": [
+          {
+            "id": 1,
+            "key": "ios_iap",
+            "platform": "apple",
+            "payment_env": "Mobile",
+            "is_web_cashier": false,
+            "description": "应用内IAP"
+          },
+          {
+            "id": 2,
+            "key": "ios_web",
+            "platform": "apple",
+            "payment_env": "Mobile",
+            "is_web_cashier": true,
+            "web_pay_scene": "external_browser",
+            "description": "应用外支付：跳转外部浏览器打开网页Web支付",
+            "cashier_public_template_ids": [
+              "saki_US_USD_5",
+              "saki_US_USD_6"
+            ],
+            "cashier_default_public_template_id": "saki_US_USD_5"
+          },
+          {
+            "id": 3,
+            "key": "android_iap",
+            "platform": "google",
+            "payment_env": "Mobile",
+            "is_web_cashier": false,
+            "description": "应用内IAP"
+          },
+          {
+            "id": 4,
+            "key": "android_web",
+            "platform": "google",
+            "payment_env": "Mobile",
+            "is_web_cashier": true,
+            "web_pay_scene": "external_browser",
+            "description": "应用外支付：跳转外部浏览器打开网页Web支付",
+            "cashier_public_template_ids": [
+              "saki_US_USD_6",
+              "saki_US_USD_5"
+            ],
+            "cashier_default_public_template_id": "saki_US_USD_6"
+          },
+          {
+            "id": 5,
+            "key": "psn_iap",
+            "platform": "PSN",
+            "payment_env": "游戏主机",
+            "is_web_cashier": false,
+            "description": "应用内IAP"
+          },
+          {
+            "id": 6,
+            "key": "windows_web",
+            "platform": "windows",
+            "payment_env": "PC",
+            "is_web_cashier": true,
+            "web_pay_scene": "embedded_browser",
+            "description": "应用外支付：内置浏览器打开网页Web支付",
+            "cashier_public_template_ids": [
+              "saki_US_USD"
+            ],
+            "cashier_default_public_template_id": "saki_US_USD"
+          }
+        ],
+        "iapGoods": [
+          {
+            "gameGoodsId": 20000021,
+            "goodsName": "新拓名6",
+            "sku": "com.he.silver.diamond6",
+            "skuType": "消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20100006,
+            "goodsName": "每周6充值卡",
+            "sku": "com.he.silver.weekly6",
+            "skuType": "订阅型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000022,
+            "goodsName": "钻石B",
+            "sku": "com.he.silver.diamondB",
+            "skuType": "消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000023,
+            "goodsName": "钻石C",
+            "sku": "com.he.silver.diamondC",
+            "skuType": "消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000024,
+            "goodsName": "月卡",
+            "sku": "com.he.silver.monthly",
+            "skuType": "订阅型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000025,
+            "goodsName": "季卡",
+            "sku": "com.he.silver.quarterly",
+            "skuType": "订阅型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000026,
+            "goodsName": "限定礼包A",
+            "sku": "com.he.silver.giftA",
+            "skuType": "非消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 30000001,
+            "goodsName": "Android钻石A",
+            "sku": "com.he.silver.gp.diamondA",
+            "skuType": "消耗型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 30000002,
+            "goodsName": "Android IAP月卡",
+            "sku": "com.he.silver.gp.monthly",
+            "skuType": "订阅型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 30000003,
+            "goodsName": "Android钻石B",
+            "sku": "com.he.silver.gp.diamondB",
+            "skuType": "消耗型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 30000004,
+            "goodsName": "Android季卡",
+            "sku": "com.he.silver.gp.quarterly",
+            "skuType": "订阅型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 50000001,
+            "goodsName": "PS5钻石包",
+            "sku": "SILVER00001",
+            "skuType": "消耗型",
+            "scenario": "psn_iap"
+          },
+          {
+            "gameGoodsId": 50000002,
+            "goodsName": "PS5月卡",
+            "sku": "SILVER00002",
+            "skuType": "订阅型",
+            "scenario": "psn_iap"
+          },
+          {
+            "gameGoodsId": 50000003,
+            "goodsName": "PS5限定礼包",
+            "sku": "SILVER00003",
+            "skuType": "非消耗型",
+            "scenario": "psn_iap"
+          }
+        ],
+        "goods": [
+          {
+            "id": 1,
+            "app_id": "saki_US",
+            "name": "100 Coins",
+            "game_product_id": "coin_100",
+            "price": 9.99,
+            "currency": "USD",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-01 10:00:00"
+          },
+          {
+            "id": 2,
+            "app_id": "saki_US",
+            "name": "500 Coins",
+            "game_product_id": "coin_500",
+            "price": 49.99,
+            "currency": "USD",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-01 10:00:00"
+          },
+          {
+            "id": 3,
+            "app_id": "saki_US",
+            "name": "1000 Coins",
+            "game_product_id": "coin_1000",
+            "price": 99.99,
+            "currency": "USD",
+            "status": 0,
+            "goods_type": 1,
+            "create_time": "2024-01-01 10:00:00"
+          },
+          {
+            "id": 4,
+            "app_id": "saki_US",
+            "name": "2000 Coins",
+            "game_product_id": "coin_2000",
+            "price": 189.99,
+            "currency": "USD",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-02 10:00:00"
+          },
+          {
+            "id": 5,
+            "app_id": "saki_US",
+            "name": "5000 Coins",
+            "game_product_id": "coin_5000",
+            "price": 449.99,
+            "currency": "USD",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-02 10:00:00"
+          },
+          {
+            "id": 10,
+            "app_id": "saki_JP",
+            "name": "100 コイン",
+            "game_product_id": "coin_100",
+            "price": 1200,
+            "currency": "JPY",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-05 10:00:00"
+          },
+          {
+            "id": 11,
+            "app_id": "saki_JP",
+            "name": "500 コイン",
+            "game_product_id": "coin_500",
+            "price": 5800,
+            "currency": "JPY",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-05 10:00:00"
+          },
+          {
+            "id": 12,
+            "app_id": "saki_JP",
+            "name": "1000 コイン",
+            "game_product_id": "coin_1000",
+            "price": 11000,
+            "currency": "JPY",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-05 10:00:00"
+          },
+          {
+            "id": 13,
+            "app_id": "saki_KR",
+            "name": "100 코인",
+            "game_product_id": "coin_100",
+            "price": 12000,
+            "currency": "KRW",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-06 10:00:00"
+          },
+          {
+            "id": 14,
+            "app_id": "saki_KR",
+            "name": "500 코인",
+            "game_product_id": "coin_500",
+            "price": 58000,
+            "currency": "KRW",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-06 10:00:00"
+          },
+          {
+            "id": 15,
+            "app_id": "saki_KR",
+            "name": "1000 코인",
+            "game_product_id": "coin_1000",
+            "price": 110000,
+            "currency": "KRW",
+            "status": 0,
+            "goods_type": 1,
+            "create_time": "2024-01-06 10:00:00"
+          },
+          {
+            "id": 16,
+            "app_id": "game2_US",
+            "name": "Starter Pack",
+            "game_product_id": "pack_starter",
+            "price": 4.99,
+            "currency": "USD",
+            "status": 1,
+            "goods_type": 2,
+            "create_time": "2024-01-07 10:00:00"
+          },
+          {
+            "id": 17,
+            "app_id": "game2_US",
+            "name": "Premium Pack",
+            "game_product_id": "pack_premium",
+            "price": 19.99,
+            "currency": "USD",
+            "status": 1,
+            "goods_type": 2,
+            "create_time": "2024-01-07 10:00:00"
+          },
+          {
+            "id": 18,
+            "app_id": "game2_US",
+            "name": "Deluxe Pack",
+            "game_product_id": "pack_deluxe",
+            "price": 49.99,
+            "currency": "USD",
+            "status": 0,
+            "goods_type": 2,
+            "create_time": "2024-01-07 10:00:00"
+          },
+          {
+            "id": 19,
+            "app_id": "game2_EU",
+            "name": "Starter Pack",
+            "game_product_id": "pack_starter",
+            "price": 4.99,
+            "currency": "EUR",
+            "status": 1,
+            "goods_type": 2,
+            "create_time": "2024-01-08 10:00:00"
+          },
+          {
+            "id": 20,
+            "app_id": "game2_EU",
+            "name": "Premium Pack",
+            "game_product_id": "pack_premium",
+            "price": 19.99,
+            "currency": "EUR",
+            "status": 1,
+            "goods_type": 2,
+            "create_time": "2024-01-08 10:00:00"
+          }
+        ]
+      },
+      "cashier": {
+        "sortTemplates": [
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "pc",
+            "is_web_cashier": true,
+            "method_count": 3,
+            "recommended_count": 2,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "pc",
+            "is_web_cashier": false,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "offline"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "android",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "apple",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "apple",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "android",
+            "is_web_cashier": true,
+            "method_count": 1,
+            "recommended_count": 0,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_CN",
+            "country_code": "CN",
+            "currency": "CNY",
+            "payment_env": "pc",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 2,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_CN",
+            "country_code": "CN",
+            "currency": "CNY",
+            "payment_env": "pc",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_CN",
+            "country_code": "CN",
+            "currency": "CNY",
+            "payment_env": "android",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_JP",
+            "country_code": "JP",
+            "currency": "JPY",
+            "payment_env": "pc",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_KR",
+            "country_code": "KR",
+            "currency": "KRW",
+            "payment_env": "pc",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "game2_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "pc",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "game2_EU",
+            "country_code": "GB",
+            "currency": "GBP",
+            "payment_env": "pc",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "game2_EU",
+            "country_code": "DE",
+            "currency": "EUR",
+            "payment_env": "pc",
+            "is_web_cashier": false,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "game3_CN",
+            "country_code": "CN",
+            "currency": "CNY",
+            "payment_env": "pc",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "CA",
+            "currency": "CAD",
+            "payment_env": "pc",
+            "is_web_cashier": false,
+            "method_count": 2,
+            "recommended_count": 1,
+            "publish_status": "published"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "AU",
+            "currency": "AUD",
+            "payment_env": "pc",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 0,
+            "publish_status": "offline"
+          },
+          {
+            "app_id": "saki_US",
+            "country_code": "US",
+            "currency": "USD",
+            "payment_env": "psn",
+            "is_web_cashier": false,
+            "method_count": 1,
+            "recommended_count": 0,
+            "publish_status": "published"
+          }
+        ],
+        "paymentInfoCollection": {
+          "listRows": [
+            {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "pc",
+              "is_web_cashier": true,
+              "collect_postal_code": true,
+              "collect_email": true
+            },
+            {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "pc",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "android",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "apple",
+              "is_web_cashier": false,
+              "collect_postal_code": false,
+              "collect_email": false
+            },
+            {
+              "app_id": "saki_JP",
+              "country_code": "JP",
+              "currency": "JPY",
+              "payment_env": "pc",
+              "is_web_cashier": true,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            {
+              "app_id": "game2_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "pc",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": true
+            }
+          ],
+          "detailByKey": {
+            "saki_US_USD_US_pc_web": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "pc",
+              "is_web_cashier": true,
+              "collect_postal_code": true,
+              "collect_email": true
+            },
+            "saki_US_USD_US_pc_nonweb": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "pc",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            "saki_US_USD_US_android_nonweb": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "android",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            "saki_US_USD_US_apple_nonweb": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "apple",
+              "is_web_cashier": false,
+              "collect_postal_code": false,
+              "collect_email": false
+            },
+            "saki_JP_JPY_JP_pc_web": {
+              "app_id": "saki_JP",
+              "country_code": "JP",
+              "currency": "JPY",
+              "payment_env": "pc",
+              "is_web_cashier": true,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            "saki_US_USD_US_pc": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "pc",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            "saki_US_USD_US_android": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "android",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            },
+            "saki_US_USD_US_apple": {
+              "app_id": "saki_US",
+              "country_code": "US",
+              "currency": "USD",
+              "payment_env": "apple",
+              "is_web_cashier": false,
+              "collect_postal_code": false,
+              "collect_email": false
+            },
+            "saki_JP_JPY_JP_pc": {
+              "app_id": "saki_JP",
+              "country_code": "JP",
+              "currency": "JPY",
+              "payment_env": "pc",
+              "is_web_cashier": false,
+              "collect_postal_code": true,
+              "collect_email": false
+            }
+          }
+        }
+      },
+      "gameApplications": {
+        "games": [
+          {
+            "id": 1,
+            "sdk_app_id": "Silver",
+            "game_name": "Silver",
+            "apps": [
+              {
+                "app_id": "saki_US",
+                "app_name": "Silver - US",
+                "game_name": "Silver",
+                "platform": "store_en",
+                "server_node": "US",
+                "region": "US",
+                "country_code": "US",
+                "pay_switch": true,
+                "create_time": "2024-01-01 10:00:00"
+              },
+              {
+                "app_id": "saki_CN",
+                "app_name": "Silver - CN",
+                "game_name": "Silver",
+                "platform": "store_cn",
+                "server_node": "CN",
+                "region": "CN",
+                "country_code": "CN",
+                "pay_switch": true,
+                "create_time": "2024-01-02 10:00:00"
+              },
+              {
+                "app_id": "saki_JP",
+                "app_name": "Silver - JP",
+                "game_name": "Silver",
+                "platform": "store_jp",
+                "server_node": "JP",
+                "region": "JP",
+                "country_code": "JP",
+                "pay_switch": true,
+                "create_time": "2024-01-03 10:00:00"
+              },
+              {
+                "app_id": "saki_KR",
+                "app_name": "Silver - KR",
+                "game_name": "Silver",
+                "platform": "store_kr",
+                "server_node": "KR",
+                "region": "KR",
+                "country_code": "KR",
+                "pay_switch": true,
+                "create_time": "2024-01-04 10:00:00"
+              },
+              {
+                "app_id": "game2_US",
+                "app_name": "Silver - US (game2)",
+                "game_name": "Silver",
+                "platform": "store_en",
+                "server_node": "US",
+                "region": "US",
+                "country_code": "US",
+                "pay_switch": false,
+                "create_time": "2024-01-05 10:00:00"
+              },
+              {
+                "app_id": "game2_EU",
+                "app_name": "Silver - EU (game2)",
+                "game_name": "Silver",
+                "platform": "store_en",
+                "server_node": "EU",
+                "region": "EU",
+                "country_code": "EU",
+                "pay_switch": true,
+                "create_time": "2024-01-06 10:00:00"
+              },
+              {
+                "app_id": "game3_CN",
+                "app_name": "Silver - CN (game3)",
+                "game_name": "Silver",
+                "platform": "store_cn",
+                "server_node": "CN",
+                "region": "CN",
+                "country_code": "CN",
+                "pay_switch": true,
+                "create_time": "2024-01-07 10:00:00"
+              }
+            ]
+          }
+        ],
+        "apps": [
+          {
+            "app_id": "saki_US",
+            "app_name": "Silver - US",
+            "game_name": "Silver",
+            "platform": "store_en",
+            "server_node": "US",
+            "region": "US",
+            "country_code": "US",
+            "pay_switch": true,
+            "create_time": "2024-01-01 10:00:00"
+          },
+          {
+            "app_id": "saki_CN",
+            "app_name": "Silver - CN",
+            "game_name": "Silver",
+            "platform": "store_cn",
+            "server_node": "CN",
+            "region": "CN",
+            "country_code": "CN",
+            "pay_switch": true,
+            "create_time": "2024-01-02 10:00:00"
+          },
+          {
+            "app_id": "saki_JP",
+            "app_name": "Silver - JP",
+            "game_name": "Silver",
+            "platform": "store_jp",
+            "server_node": "JP",
+            "region": "JP",
+            "country_code": "JP",
+            "pay_switch": true,
+            "create_time": "2024-01-03 10:00:00"
+          },
+          {
+            "app_id": "saki_KR",
+            "app_name": "Silver - KR",
+            "game_name": "Silver",
+            "platform": "store_kr",
+            "server_node": "KR",
+            "region": "KR",
+            "country_code": "KR",
+            "pay_switch": true,
+            "create_time": "2024-01-04 10:00:00"
+          },
+          {
+            "app_id": "game2_US",
+            "app_name": "Silver - US (game2)",
+            "game_name": "Silver",
+            "platform": "store_en",
+            "server_node": "US",
+            "region": "US",
+            "country_code": "US",
+            "pay_switch": false,
+            "create_time": "2024-01-05 10:00:00"
+          },
+          {
+            "app_id": "game2_EU",
+            "app_name": "Silver - EU (game2)",
+            "game_name": "Silver",
+            "platform": "store_en",
+            "server_node": "EU",
+            "region": "EU",
+            "country_code": "EU",
+            "pay_switch": true,
+            "create_time": "2024-01-06 10:00:00"
+          },
+          {
+            "app_id": "game3_CN",
+            "app_name": "Silver - CN (game3)",
+            "game_name": "Silver",
+            "platform": "store_cn",
+            "server_node": "CN",
+            "region": "CN",
+            "country_code": "CN",
+            "pay_switch": true,
+            "create_time": "2024-01-07 10:00:00"
+          }
+        ]
+      },
+      "orderConfigDefault": {
+        "timeout_value": 30,
+        "timeout_unit": "minute"
+      }
+    }
+  }
+}

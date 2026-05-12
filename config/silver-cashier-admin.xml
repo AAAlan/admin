@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<game version="39" id="Silver" logicalGame="Silver" exportedFrom="cashier-admin-mock">
+  <note><![CDATA[本文件由 npm run export:xml 生成。单游戏 Silver；region=overseas / domestic 为管理后台两套数据切片。密钥类字段在后台 mock 中为演示占位，结构与 silver.xml 不完全一致处见 silverXmlFieldsNotInAdmin。]]></note>
+
+  <shared>
+    <cubeKey note="silver.xml 有，后台当前无此配置项"/>
+    <cubeAppId note="silver.xml 有，后台当前无此配置项"/>
+    <cubeServerKeyId note="silver.xml 有，后台当前无此配置项"/>
+    <currencies>
+      <currency code="USD" name="美元 (US Dollar)"/>
+      <currency code="CNY" name="人民币 (Chinese Yuan)"/>
+      <currency code="EUR" name="欧元 (Euro)"/>
+      <currency code="GBP" name="英镑 (British Pound)"/>
+      <currency code="JPY" name="日元 (Japanese Yen)"/>
+      <currency code="KRW" name="韩元 (Korean Won)"/>
+      <currency code="CAD" name="加元 (Canadian Dollar)"/>
+      <currency code="AUD" name="澳元 (Australian Dollar)"/>
+    </currencies>
+    <languages>
+      <language code="en" name="English"/>
+      <language code="zh" name="中文"/>
+      <language code="ja" name="日本語"/>
+      <language code="ko" name="한국어"/>
+    </languages>
+    <iapGoods>
+    <iapSku gameGoodsId="20000021" goodsName="新拓名6" sku="com.he.silver.diamond6" skuType="消耗型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="20100006" goodsName="每周6充值卡" sku="com.he.silver.weekly6" skuType="订阅型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="20000022" goodsName="钻石B" sku="com.he.silver.diamondB" skuType="消耗型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="20000023" goodsName="钻石C" sku="com.he.silver.diamondC" skuType="消耗型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="20000024" goodsName="月卡" sku="com.he.silver.monthly" skuType="订阅型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="20000025" goodsName="季卡" sku="com.he.silver.quarterly" skuType="订阅型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="20000026" goodsName="限定礼包A" sku="com.he.silver.giftA" skuType="非消耗型" scenario="ios_iap"/>
+    <iapSku gameGoodsId="30000001" goodsName="Android钻石A" sku="com.he.silver.gp.diamondA" skuType="消耗型" scenario="android_iap"/>
+    <iapSku gameGoodsId="30000002" goodsName="Android IAP月卡" sku="com.he.silver.gp.monthly" skuType="订阅型" scenario="android_iap"/>
+    <iapSku gameGoodsId="30000003" goodsName="Android钻石B" sku="com.he.silver.gp.diamondB" skuType="消耗型" scenario="android_iap"/>
+    <iapSku gameGoodsId="30000004" goodsName="Android季卡" sku="com.he.silver.gp.quarterly" skuType="订阅型" scenario="android_iap"/>
+    <iapSku gameGoodsId="50000001" goodsName="PS5钻石包" sku="SILVER00001" skuType="消耗型" scenario="psn_iap"/>
+    <iapSku gameGoodsId="50000002" goodsName="PS5月卡" sku="SILVER00002" skuType="订阅型" scenario="psn_iap"/>
+    <iapSku gameGoodsId="50000003" goodsName="PS5限定礼包" sku="SILVER00003" skuType="非消耗型" scenario="psn_iap"/>
+    </iapGoods>
+    <channelTemplates>
+      <channelTemplate channel_name="adyen" display_name="Adyen"/>
+      <channelTemplate channel_name="stripe" display_name="Stripe"/>
+      <channelTemplate channel_name="paypal" display_name="PayPal"/>
+      <channelTemplate channel_name="antom" display_name="Antom"/>
+      <channelTemplate channel_name="payermax" display_name="PayerMax"/>
+      <channelTemplate channel_name="mycard" display_name="MyCard"/>
+      <channelTemplate channel_name="alipay" display_name="Alipay"/>
+      <channelTemplate channel_name="wechat" display_name="WeChat Pay"/>
+      <channelTemplate channel_name="apple" display_name="Apple Pay"/>
+      <channelTemplate channel_name="google" display_name="Google Pay"/>
+    </channelTemplates>
+    <paymentInfoDetailKeys count="11" note="详情见 mockPaymentInfoDetailMap，此处省略展开"/>
+  </shared>
+
+  <region name="overseas">
+    <scenarioSeeds>
+    <scenario id="1" key="ios_iap" platform="apple" payment_env="Mobile" is_web_cashier="false"><description>应用内IAP</description></scenario>
+    <scenario id="2" key="ios_web" platform="apple" payment_env="Mobile" is_web_cashier="true"><description>应用外支付：跳转外部浏览器打开网页Web支付</description></scenario>
+    <scenario id="3" key="android_iap" platform="google" payment_env="Mobile" is_web_cashier="false"><description>应用内IAP</description></scenario>
+    <scenario id="4" key="android_web" platform="google" payment_env="Mobile" is_web_cashier="true"><description>应用外支付：跳转外部浏览器打开网页Web支付</description></scenario>
+    <scenario id="5" key="psn_iap" platform="PSN" payment_env="游戏主机" is_web_cashier="false"><description>应用内IAP</description></scenario>
+    <scenario id="6" key="windows_web" platform="windows" payment_env="PC" is_web_cashier="true"><description>应用外支付：内置浏览器打开网页Web支付</description></scenario>
+    </scenarioSeeds>
+    <apps>
+    <app app_id="saki_US" game_name="Silver" platform="store_en" country_code="US" pay_switch="true"/>
+    <app app_id="saki_JP" game_name="Silver" platform="store_jp" country_code="JP" pay_switch="true"/>
+    <app app_id="saki_KR" game_name="Silver" platform="store_kr" country_code="KR" pay_switch="true"/>
+    <app app_id="game2_US" game_name="Silver" platform="store_en" country_code="US" pay_switch="false"/>
+    <app app_id="game2_EU" game_name="Silver" platform="store_en" country_code="EU" pay_switch="true"/>
+    </apps>
+    <goodsCatalog>
+      <item id="1" app_id="saki_US" name="100 Coins" game_product_id="coin_100" price="9.99" currency="USD" status="1"/>
+      <item id="2" app_id="saki_US" name="500 Coins" game_product_id="coin_500" price="49.99" currency="USD" status="1"/>
+      <item id="3" app_id="saki_US" name="1000 Coins" game_product_id="coin_1000" price="99.99" currency="USD" status="0"/>
+      <item id="4" app_id="saki_US" name="2000 Coins" game_product_id="coin_2000" price="189.99" currency="USD" status="1"/>
+      <item id="5" app_id="saki_US" name="5000 Coins" game_product_id="coin_5000" price="449.99" currency="USD" status="1"/>
+      <item id="10" app_id="saki_JP" name="100 コイン" game_product_id="coin_100" price="1200" currency="JPY" status="1"/>
+      <item id="11" app_id="saki_JP" name="500 コイン" game_product_id="coin_500" price="5800" currency="JPY" status="1"/>
+      <item id="12" app_id="saki_JP" name="1000 コイン" game_product_id="coin_1000" price="11000" currency="JPY" status="1"/>
+      <item id="13" app_id="saki_KR" name="100 코인" game_product_id="coin_100" price="12000" currency="KRW" status="1"/>
+      <item id="14" app_id="saki_KR" name="500 코인" game_product_id="coin_500" price="58000" currency="KRW" status="1"/>
+      <item id="15" app_id="saki_KR" name="1000 코인" game_product_id="coin_1000" price="110000" currency="KRW" status="0"/>
+      <item id="16" app_id="game2_US" name="Starter Pack" game_product_id="pack_starter" price="4.99" currency="USD" status="1"/>
+      <item id="17" app_id="game2_US" name="Premium Pack" game_product_id="pack_premium" price="19.99" currency="USD" status="1"/>
+      <item id="18" app_id="game2_US" name="Deluxe Pack" game_product_id="pack_deluxe" price="49.99" currency="USD" status="0"/>
+      <item id="19" app_id="game2_EU" name="Starter Pack" game_product_id="pack_starter" price="4.99" currency="EUR" status="1"/>
+      <item id="20" app_id="game2_EU" name="Premium Pack" game_product_id="pack_premium" price="19.99" currency="EUR" status="1"/>
+    </goodsCatalog>
+    <platform name="web" note="对应 silver.xml 海外 Web 收银（Adyen/PayPal/Xsolla 等抽象）">
+      <paymentChannels>
+    <payment channelName="adyen" channel_id="adyen_MerchantAccount_Test123" pay_name="Adyen" status="true"/>
+    <payment channelName="stripe" channel_id="stripe_acct_1234567890" pay_name="Stripe" status="true"/>
+    <payment channelName="paypal" channel_id="paypal_merchant_paypal_001" pay_name="PayPal" status="true"/>
+    <payment channelName="antom" channel_id="antom_antom_merchant_001" pay_name="Antom" status="true"/>
+    <payment channelName="payermax" channel_id="payermax_payermax_merchant_001" pay_name="PayerMax" status="true"/>
+    <payment channelName="mycard" channel_id="mycard_mycard_merchant_001" pay_name="MyCard" status="true"/>
+      </paymentChannels>
+      <paymentMethods>
+    <payMethod id="1" pay_name="CARD" pay_type="" channel_id="adyen_MerchantAccount_Test123" status="enabled"/>
+    <payMethod id="2" pay_name="CARD" pay_type="" channel_id="adyen_MerchantAccount_Test123" status="enabled"/>
+    <payMethod id="3" pay_name="CARD" pay_type="" channel_id="stripe_acct_1234567890" status="enabled"/>
+    <payMethod id="4" pay_name="CARD" pay_type="" channel_id="stripe_acct_1234567890" status="enabled"/>
+    <payMethod id="5" pay_name="PayPal" pay_type="" channel_id="paypal_merchant_paypal_001" status="enabled"/>
+    <payMethod id="6" pay_name="CARD" pay_type="" channel_id="antom_antom_merchant_001" status="enabled"/>
+    <payMethod id="7" pay_name="DANA" pay_type="" channel_id="antom_antom_merchant_001" status="enabled"/>
+    <payMethod id="8" pay_name="CARD" pay_type="" channel_id="payermax_payermax_merchant_001" status="enabled"/>
+    <payMethod id="9" pay_name="CARD" pay_type="" channel_id="payermax_payermax_merchant_001" status="enabled"/>
+    <payMethod id="10" pay_name="MyCard" pay_type="" channel_id="mycard_mycard_merchant_001" status="enabled"/>
+      </paymentMethods>
+    </platform>
+    <payMethods>
+    <payArea area="US">
+      <payEnv gameEnv="pc" web="true">
+        <payTypeInfo payType="template_saki_US_USD">
+          <recommend>true</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=3; recommended_count=2; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="pc" web="false">
+        <payTypeInfo payType="template_saki_US_USD_2">
+          <recommend>true</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=offline</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="android" web="false">
+        <payTypeInfo payType="template_saki_US_USD_3">
+          <recommend>true</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=1; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="apple" web="false">
+        <payTypeInfo payType="template_saki_US_USD_4">
+          <recommend>true</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=1; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="apple" web="true">
+        <payTypeInfo payType="template_saki_US_USD_5">
+          <recommend>true</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="android" web="true">
+        <payTypeInfo payType="template_saki_US_USD_6">
+          <recommend>false</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=1; recommended_count=0; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="CN">
+      <payEnv gameEnv="pc" web="true">
+        <payTypeInfo payType="template_saki_CN_CNY">
+          <recommend>true</recommend>
+          <name>saki_CN CNY 收银台</name>
+          <desc>method_count=2; recommended_count=2; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="CN">
+      <payEnv gameEnv="pc" web="false">
+        <payTypeInfo payType="template_saki_CN_CNY_2">
+          <recommend>true</recommend>
+          <name>saki_CN CNY 收银台</name>
+          <desc>method_count=1; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="CN">
+      <payEnv gameEnv="android" web="false">
+        <payTypeInfo payType="template_saki_CN_CNY_3">
+          <recommend>true</recommend>
+          <name>saki_CN CNY 收银台</name>
+          <desc>method_count=1; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="JP">
+      <payEnv gameEnv="pc" web="true">
+        <payTypeInfo payType="template_saki_JP_JPY">
+          <recommend>true</recommend>
+          <name>saki_JP JPY 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="KR">
+      <payEnv gameEnv="pc" web="true">
+        <payTypeInfo payType="template_saki_KR_KRW">
+          <recommend>true</recommend>
+          <name>saki_KR KRW 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="pc" web="false">
+        <payTypeInfo payType="template_game2_US_USD">
+          <recommend>true</recommend>
+          <name>game2_US USD 收银台</name>
+          <desc>method_count=1; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="GB">
+      <payEnv gameEnv="pc" web="true">
+        <payTypeInfo payType="template_game2_GB_GBP">
+          <recommend>true</recommend>
+          <name>game2_EU GBP 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="DE">
+      <payEnv gameEnv="pc" web="false">
+        <payTypeInfo payType="template_game2_DE_EUR">
+          <recommend>true</recommend>
+          <name>game2_EU EUR 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="CN">
+      <payEnv gameEnv="pc" web="true">
+        <payTypeInfo payType="template_game3_CN_CNY">
+          <recommend>true</recommend>
+          <name>game3_CN CNY 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="CA">
+      <payEnv gameEnv="pc" web="false">
+        <payTypeInfo payType="template_saki_CA_CAD">
+          <recommend>true</recommend>
+          <name>saki_US CAD 收银台</name>
+          <desc>method_count=2; recommended_count=1; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="AU">
+      <payEnv gameEnv="pc" web="false">
+        <payTypeInfo payType="template_saki_AU_AUD">
+          <recommend>false</recommend>
+          <name>saki_US AUD 收银台</name>
+          <desc>method_count=1; recommended_count=0; publish_status=offline</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    <payArea area="US">
+      <payEnv gameEnv="psn" web="false">
+        <payTypeInfo payType="template_saki_US_USD_7">
+          <recommend>false</recommend>
+          <name>saki_US USD 收银台</name>
+          <desc>method_count=1; recommended_count=0; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    </payMethods>
+    <billingInfoCollectList>
+    <billingCollect app_id="saki_US" country="US" currency="USD" payment_env="pc" web="true" collect_postal="true" collect_email="true"/>
+    <billingCollect app_id="saki_US" country="US" currency="USD" payment_env="pc" web="false" collect_postal="true" collect_email="false"/>
+    <billingCollect app_id="saki_US" country="US" currency="USD" payment_env="android" web="false" collect_postal="true" collect_email="false"/>
+    <billingCollect app_id="saki_US" country="US" currency="USD" payment_env="apple" web="false" collect_postal="false" collect_email="false"/>
+    <billingCollect app_id="saki_JP" country="JP" currency="JPY" payment_env="pc" web="true" collect_postal="true" collect_email="false"/>
+    <billingCollect app_id="game2_US" country="US" currency="USD" payment_env="pc" web="false" collect_postal="true" collect_email="true"/>
+    </billingInfoCollectList>
+  </region>
+
+  <region name="domestic">
+    <scenarioSeeds>
+    <scenario id="1" key="ios_iap" platform="apple" payment_env="Mobile" is_web_cashier="false"><description>【平台应用内购买】应用内 IAP：苹果 App Store 内购</description></scenario>
+    <scenario id="2" key="android_iap" platform="huawei" payment_env="Mobile" is_web_cashier="false"><description>【平台应用内购买】应用内 IAP：手机厂商应用商城统一支付 SDK</description></scenario>
+    <scenario id="3" key="android_web" platform="vivo" payment_env="Mobile" is_web_cashier="true"><description>【平台应用内购买】应用内三方支付：应用内自建原生收银台，跳转微信 App / 支付宝 App 支付</description></scenario>
+    <scenario id="4" key="psn_iap" platform="PSN" payment_env="游戏主机" is_web_cashier="false"><description>【平台应用内购买】应用内 IAP：PlayStation 商店内购</description></scenario>
+    <scenario id="5" key="windows_native_checkout" platform="windows" payment_env="PC" is_web_cashier="true"><description>【平台应用内购买】应用内三方支付：应用内自建原生收银台，微信 App / 支付宝 App 扫码支付</description></scenario>
+    <scenario id="6" key="other_platforms" platform="huawei" payment_env="Mobile" is_web_cashier="false"><description>【平台应用内购买】其它平台（导图「…」：如鸿蒙等，可在此扩展配置）</description></scenario>
+    </scenarioSeeds>
+    <apps>
+    <app app_id="saki_CN" game_name="Silver" platform="store_cn" country_code="CN" pay_switch="true"/>
+    <app app_id="game3_CN" game_name="Silver" platform="store_cn" country_code="CN" pay_switch="true"/>
+    </apps>
+    <goodsCatalog>
+      <item id="6" app_id="saki_CN" name="100 金币" game_product_id="coin_100" price="68" currency="CNY" status="1"/>
+      <item id="7" app_id="saki_CN" name="500 金币" game_product_id="coin_500" price="328" currency="CNY" status="1"/>
+      <item id="8" app_id="saki_CN" name="1000 金币" game_product_id="coin_1000" price="648" currency="CNY" status="1"/>
+      <item id="9" app_id="saki_CN" name="2000 金币" game_product_id="coin_2000" price="1280" currency="CNY" status="0"/>
+      <item id="21" app_id="game3_CN" name="新手礼包" game_product_id="pack_newbie" price="30" currency="CNY" status="1"/>
+      <item id="22" app_id="game3_CN" name="豪华礼包" game_product_id="pack_luxury" price="198" currency="CNY" status="1"/>
+      <item id="23" app_id="game3_CN" name="超级礼包" game_product_id="pack_super" price="648" currency="CNY" status="0"/>
+    </goodsCatalog>
+    <platform name="he" note="对应 silver.xml 国内 he 平台（微信/支付宝等）">
+      <paymentChannels>
+    <payment channelName="alipay" channel_id="alipay_2088123456789012" pay_name="Alipay" status="true"/>
+    <payment channelName="wechat" channel_id="wechat_wx1234567890abcdef" pay_name="WeChat Pay" status="true"/>
+      </paymentChannels>
+      <paymentMethods>
+    <payMethod id="11" pay_name="Alipay" pay_type="" channel_id="alipay_2088123456789012" status="enabled"/>
+    <payMethod id="12" pay_name="WeChat Pay" pay_type="" channel_id="wechat_wx1234567890abcdef" status="enabled"/>
+      </paymentMethods>
+    </platform>
+    <payMethods>
+    <payArea area="CN">
+      <payEnv gameEnv="android" web="true">
+        <payTypeInfo payType="template_saki_CN_CNY">
+          <recommend>true</recommend>
+          <name>saki_CN CNY 收银台</name>
+          <desc>method_count=2; recommended_count=2; publish_status=published</desc>
+          <webUrl/>
+          <icon/>
+        </payTypeInfo>
+      </payEnv>
+    </payArea>
+    </payMethods>
+    <billingInfoCollectList>
+    <billingCollect app_id="saki_CN" country="CN" currency="CNY" payment_env="pc" web="true" collect_postal="false" collect_email="true"/>
+    <billingCollect app_id="saki_CN" country="CN" currency="CNY" payment_env="android" web="false" collect_postal="false" collect_email="true"/>
+    </billingInfoCollectList>
+  </region>
+
+  <silverXmlFieldsNotInAdmin>
+    <field path="cubeKey" silverXml="有" admin="无"/>
+    <field path="cubeAppId" silverXml="有" admin="无"/>
+    <field path="cubeServerKeyId" silverXml="有" admin="无"/>
+    <field path="payMethods/payTypeAttrs/payTypeAttr CDATA(JSON)" silverXml="有" admin="无"/>
+    <field path="payTypeInfo/icon, webUrl 业务文案" silverXml="有" admin="收银台排序侧无 icon/webUrl 字段"/>
+    <field path="platform/payment 下真实密钥、证书、mchId、resultUrl、notifyUrl、redirectUrl 等" silverXml="有" admin="渠道编辑有模板字段，与 XML 节点名/粒度不一致"/>
+    <field path="apple: bundleId, validCertHashs, dcConfig, universalLink" silverXml="有" admin="无（IAP SKU 在 iapGoods）"/>
+    <field path="windows: webProducts, callbackUrl, addCoinUrl, addCoinSecret, addCoinForwards" silverXml="有" admin="订单配置仅有超时等，无加币 URL/Secret"/>
+    <field path="psn: serverLabel, entitlementLabel" silverXml="有" admin="IAP 商品无 entitlementLabel"/>
+    <field path="epic / xsolla_web 完整参数与商品 catalog" silverXml="有" admin="无 Epic/Xsolla 专用配置"/>
+    <field path="useridWhitelist" silverXml="有" admin="无"/>
+    <field path="game/@version 语义（客户端资源版本）" silverXml="有" admin="导出时仅引用 silver.xml 的版本号作对照"/>
+  </silverXmlFieldsNotInAdmin>
+</game>

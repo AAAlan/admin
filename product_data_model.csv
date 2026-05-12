@@ -1,0 +1,88 @@
+模块,实体/数据模型,字段名,类型,必填,示例值,字段说明,来源页面/API
+支付配置,PaymentChannel,channel_id,string,是,adyen_MerchantAccount_Test123,支付渠道唯一ID（由channel_name+merchant_account生成）,PaymentChannels/mockAPI.getPaymentChannels
+支付配置,PaymentChannel,sdk_app_id,string,是,saki,游戏应用ID（Game id）,PaymentChannelEdit
+支付配置,PaymentChannel,channel_name,string,是,adyen,渠道编码（模板键）,PaymentChannelEdit/mockChannelTemplates
+支付配置,PaymentChannel,pay_name,string,是,Adyen,渠道显示名称,PaymentChannels
+支付配置,PaymentChannel,merchant_account,string,是,MerchantAccount_Test123,渠道商户账户,PaymentChannelEdit
+支付配置,PaymentChannel,contract_subject,string,是,Happy Elements Co., Ltd.,我方签约主体,PaymentChannelEdit
+支付配置,PaymentChannel,channel_subject,string,是,Adyen N.V.,渠道签约主体,PaymentChannelEdit
+支付配置,PaymentChannel,open_payment_method_ids,array<number>,是,"[1,8]",开通支付方式ID列表（子渠道）,PaymentChannelEdit
+支付配置,PaymentChannel,open_payment_method_names,array<string>,否,"[""Visa"",""Mastercard""]",开通支付方式名称冗余字段,PaymentChannelEdit/PaymentChannels
+支付配置,PaymentChannel,status,boolean,是,true,渠道启用状态,PaymentChannelEdit
+支付配置,PaymentChannel,channel_params,json object,按模板,{"api_key":"xxx","public_key":"xxx"},渠道扩展参数JSON（模板校验）,PaymentChannelEdit/mockChannelTemplates
+支付配置,PaymentMethod,id,number,是,1,支付方式主键,PaymentMethods/mockAPI.getPaymentMethods
+支付配置,PaymentMethod,pay_name,string,是,Visa,支付方式名称,PaymentMethodEdit
+支付配置,PaymentMethod,pay_type,enum(card|wallet|bank),是,card,支付类型,PaymentMethodEdit
+支付配置,PaymentMethod,channel_id,string,是,adyen_MerchantAccount_Test123,归属渠道ID（用于关联子渠道）,mockAPI.getPaymentMethods
+支付配置,PaymentMethod,countries,array<string>,是,"[""US"",""GB""]",覆盖国家地区,PaymentMethodEdit
+支付配置,PaymentMethod,currencies,array<string>,是,"[""USD"",""GBP""]",覆盖币种,PaymentMethodEdit
+支付配置,PaymentMethod,icon_url,string,否,https://cdn.example.com/payment-icons/visa.png,图标URL,PaymentMethodEdit
+支付配置,PaymentMethod,status,boolean,是,true,支付方式启用状态,PaymentMethodEdit
+收银台配置,PaymentSortConfig,app_id,string,是,saki,游戏应用ID（当前UI默认saki）,PaymentSort
+收银台配置,PaymentSortConfig,country_code,string,是,US,国家地区,PaymentSort
+收银台配置,PaymentSortConfig,currency,string,是,USD,币种,PaymentSort
+收银台配置,PaymentSortConfig,payment_env,enum(pc|android|apple|recharge_mall),是,pc,支付环境,PaymentSort
+收银台配置,PaymentSortConfig,is_web_cashier,boolean,是,true,是否web收银台维度,PaymentSort
+收银台配置,PaymentSortConfig.payment_methods[].payment_method_id,string,是,pm_adyen_visa,支付方式业务ID,PaymentSort.handleSave
+收银台配置,PaymentSortConfig.payment_methods[].channel_id,string,是,adyen_MerchantAccount_Test123,所属渠道ID,PaymentSort.handleSave
+收银台配置,PaymentSortConfig.payment_methods[].sort_order,number,是,1,展示排序（越小越靠前）,PaymentSort拖拽
+收银台配置,PaymentSortConfig.payment_methods[].is_recommended,boolean,是,true,是否推荐,PaymentSort
+收银台配置,PaymentSortConfig.payment_methods[].recommend_text,string,条件必填,美国用户主流支付方式，成功率高,推荐文案（推荐开启时）,PaymentSort
+账单信息收集,PaymentInfoConfig,app_id,string,是,saki,游戏应用ID,PaymentInfoConfig
+账单信息收集,PaymentInfoConfig,country_code,string,是,US,国家地区,PaymentInfoConfig
+账单信息收集,PaymentInfoConfig,currency,string,是,USD,币种,PaymentInfoConfig
+账单信息收集,PaymentInfoConfig,payment_env,enum(pc|android|apple|recharge_mall),是,pc,支付环境,PaymentInfoConfig
+账单信息收集,PaymentInfoConfig,is_web_cashier,boolean,是,false,是否web收银台维度,PaymentInfoConfig
+账单信息收集,PaymentInfoConfig,collect_postal_code,boolean,是,true,是否收集邮编,PaymentInfoConfig
+账单信息收集,PaymentInfoConfig,collect_email,boolean,是,true,是否收集邮箱,PaymentInfoConfig
+游戏基础配置,GameBaseConfig,type,enum(CN|OVERSEA),是,CN,区域类型（当前Demo固定）,GameBaseConfigList
+游戏基础配置,GameBaseConfig,gameName,string,是,EnsembleStars,游戏名,GameBaseConfigList
+游戏基础配置,GameBaseConfig,desc,string,否,中国区基础配置,描述,GameBaseConfigList
+商品配置,Goods,goodsId,number,是,1,商品ID,GoodsConfig
+商品配置,Goods,goodsName,string,是,新拓名6,商品名称,GoodsConfig
+商品配置,Goods,gameGoodsId,number/string,是,20000021,游戏内商品ID,GoodsConfig
+商品配置,Goods,goodsDesc,string,否,新拓名6,商品描述,GoodsConfig
+商品配置,Goods,sdk_platform,string,是,apple_en,平台标识,GoodsConfig
+商品配置,Goods,statusText,enum(在售|待售),是,待售,商品状态（列表展示文案）,GoodsConfig
+公共维度,App,app_id,string,是,saki_US,应用实例ID（区域化）,mockApps
+公共维度,App,sdk_app_id,string,是,saki,游戏应用ID（聚合维度）,mockGames/mockApps
+公共维度,App,game_name,string,是,EnsembleStars,游戏名称,mockApps
+公共维度,App,country_code,string,否,US,国家地区,mockApps
+公共维度,Currency,code,string,是,USD,币种代码,mockCurrencies
+公共维度,Currency,name,string,是,美元 (US Dollar),币种名称,mockCurrencies
+XML遗留配置（silver）,SilverGameConfig,game.version,number,是,39,配置版本号（整包版本控制）,silver.xml
+XML遗留配置（silver）,SilverGameConfig,cubeKey,string,否,9a7fb873-e89c-4f5f-b442-78f3de3ec6cf,Cube服务密钥,silver.xml
+XML遗留配置（silver）,SilverGameConfig,cubeAppId,string,否,484055296239488632,Cube应用ID,silver.xml
+XML遗留配置（silver）,SilverGameConfig,cubeServerKeyId,string,否,ef1b3441-402a-44d2-bc4a-04b483ce4ccc,Cube服务端Key ID,silver.xml
+XML遗留配置（silver）,PayMethods.payArea,area,string,是,KR,支付区域（国家/地区）,silver.xml /game/payMethods/payArea@area
+XML遗留配置（silver）,PayMethods.payEnv,gameEnv,enum(pc|android|ios|...),是,pc,支付环境（端能力维度）,silver.xml /payEnv@gameEnv
+XML遗留配置（silver）,PayMethods.payEnv,web,boolean,否,true,是否Web收银台维度,silver.xml /payEnv@web
+XML遗留配置（silver）,PayMethods.payTypeInfo,payType,string,是,alipay_global_pc,支付方式编码（映射到后台PaymentMethod）,silver.xml /payTypeInfo@payType
+XML遗留配置（silver）,PayMethods.payTypeInfo,recommend,boolean,否,false,是否推荐位,silver.xml
+XML遗留配置（silver）,PayMethods.payTypeInfo,icon,string,否,xxx,支付方式图标,silver.xml
+XML遗留配置（silver）,PayMethods.payTypeInfo,name,string,否,公众号,支付方式展示名,silver.xml
+XML遗留配置（silver）,PayMethods.payTypeInfo,webUrl,string,否,111,收银台跳转URL,silver.xml
+XML遗留配置（silver）,PayMethods.payTypeInfo,desc,string,否,222,支付方式说明文案,silver.xml
+XML遗留配置（silver）,PayMethods.payTypeAttrs,payTypeAttr.payType,string,是,alipay_global_pc,扩展属性所属payType,silver.xml /payTypeAttr@payType
+XML遗留配置（silver）,PayMethods.payTypeAttrs,payTypeAttr.json,json object,否,"{""subChannel"":""CARD""}",支付方式扩展属性JSON（如subChannel）,silver.xml /payTypeAttr CDATA
+XML遗留配置（silver）,Platform,platform.name,string,是,windows,平台标识（he/apple/windows/psn/web等）,silver.xml /platform@name
+XML遗留配置（silver）,Platform,dcAppId,string,否,sdk_qa_prod,平台对应DC应用ID,silver.xml /platform/dcAppId
+XML遗留配置（silver）,Platform,payment.channelName,string,是,wechat_pc,支付通道编码,silver.xml /payment@channelName
+XML遗留配置（silver）,Platform,payment.channelAppId,string,否,wx661beff4631d3ed3,同通道多应用区分键,silver.xml /payment@channelAppId
+XML遗留配置（silver）,PlatformPaymentCredential,appId,string,按渠道,2021004108696697,渠道应用ID（微信/支付宝等）,silver.xml
+XML遗留配置（silver）,PlatformPaymentCredential,appSecret/stringKey,string,按渠道,22ac8ee2c0542cf1333283ff6ab35689,渠道密钥（敏感）,silver.xml
+XML遗留配置（silver）,PlatformPaymentCredential,mchId/stringKey,string,按渠道,1650730611,商户号（敏感）,silver.xml
+XML遗留配置（silver）,PlatformPaymentCredential,publicKey/privateKey/cert,text,按渠道,MIIB... / MIIE... / CERT...,渠道证书与密钥（高敏）,silver.xml
+XML遗留配置（silver）,PlatformRouting,callbackUrl/resultUrl/notifyUrl/redirectUrl,string,按场景,https://.../callback,支付回调与结果页路由,silver.xml
+XML遗留配置（silver）,PlatformRouting,addCoinUrl/string,否,http://dev2.payment.happyelements.com/success.html,加币回调地址,silver.xml（全局/平台级）
+XML遗留配置（silver）,PlatformRouting,addCoinSecret,string,否,b6debd406c39fd868075ce555228a994,加币签名密钥（敏感）,silver.xml（全局/平台级）
+XML遗留配置（silver）,PlatformRouting,addCoinForwards,mixed,否,1 或 空,加币转发配置（兼容历史格式）,silver.xml
+XML遗留配置（silver）,PlatformSecurity,useridWhitelist,string,否,1,白名单用户配置,silver.xml
+XML遗留配置（silver）,ProductMapping,products[].id,string,按渠道,sdktest02,渠道商品ID,silver.xml /payment/products/product@id
+XML遗留配置（silver）,ProductMapping,products[].sku,string,按渠道,4de56902ed5841d6b3058929621aa039,平台SKU,silver.xml
+XML遗留配置（silver）,ProductMapping,products[].skuType,string,按渠道,comsubables,商品类型（消耗型/订阅等）,silver.xml
+XML遗留配置（silver）,ProductMapping,products[].catalogItemId/entitlementLabel,string,否,b2c0520f... / SDKTESTCONSUME01,平台商品扩展映射字段,silver.xml
+XML遗留配置（silver）,WebProductMapping,webProducts[].webProduct.id,string,按平台,1,Web商品ID,silver.xml /webProducts/webProduct@id
+XML遗留配置（silver）,WebProductMapping,webProducts[].webProduct.price,number/string,按平台,0.1,Web价格,silver.xml
+XML遗留配置（silver）,WebProductMapping,webProducts[].webProduct.currency,string,按平台,CNY,Web币种,silver.xml
+XML遗留配置（silver）,渠道差异化参数,merchantId/projectId/clientId/clientSecret/sandbox/environment,string|boolean,按渠道,308142 / sandbox,渠道私有参数（如xsolla/epic/adyen/paypal_pc）,silver.xml

@@ -1,0 +1,537 @@
+{
+  "_meta": {
+    "format": "cashier-admin-config",
+    "version": 3,
+    "region": "domestic",
+    "gameId": "Silver",
+    "generatedAt": "2026-04-30T04:11:44.656Z",
+    "description": "Silver 游戏 · 支付中心（国内）静态配置。games.Silver 与侧栏「支付渠道管理 / 支付方式管理 / 支付场景管理」一致；数据已按国内渠道/场景过滤。"
+  },
+  "games": {
+    "Silver": {
+      "paymentBasics": {
+        "paymentChannels": [
+          {
+            "channel_id": "alipay_2088123456789012",
+            "sdk_app_id": "Silver",
+            "pay_name": "支付宝",
+            "channel_name": "alipay",
+            "merchant_account": "2088123456789012",
+            "contract_subject": "Happy Elements Co., Ltd.",
+            "channel_subject": "支付宝（中国）网络技术有限公司",
+            "public_key": "Alipay_Public_Key_1234567890",
+            "private_key": "Alipay_Private_Key_1234567890",
+            "status": true
+          },
+          {
+            "channel_id": "wechat_wx1234567890abcdef",
+            "sdk_app_id": "Silver",
+            "pay_name": "微信支付",
+            "channel_name": "wechat",
+            "merchant_account": "wx1234567890abcdef",
+            "contract_subject": "Happy Elements Co., Ltd.",
+            "channel_subject": "财付通支付科技有限公司",
+            "public_key": "WeChat_Public_Key_1234567890",
+            "private_key": "WeChat_Private_Key_1234567890",
+            "status": true
+          }
+        ],
+        "channelTemplates": [
+          {
+            "channel_name": "alipay",
+            "display_name": "Alipay",
+            "parameters": [
+              {
+                "key": "app_id",
+                "label": "App ID",
+                "type": "text",
+                "required": true,
+                "description": "支付宝应用ID"
+              },
+              {
+                "key": "public_key",
+                "label": "Public Key",
+                "type": "textarea",
+                "required": true,
+                "description": "支付宝公钥"
+              },
+              {
+                "key": "private_key",
+                "label": "Private Key",
+                "type": "textarea",
+                "required": true,
+                "description": "应用私钥"
+              }
+            ]
+          },
+          {
+            "channel_name": "wechat",
+            "display_name": "WeChat Pay",
+            "parameters": [
+              {
+                "key": "app_id",
+                "label": "App ID",
+                "type": "text",
+                "required": true,
+                "description": "微信支付App ID"
+              },
+              {
+                "key": "mch_id",
+                "label": "Merchant ID",
+                "type": "text",
+                "required": true,
+                "description": "商户号"
+              },
+              {
+                "key": "api_key",
+                "label": "API Key",
+                "type": "textarea",
+                "required": true,
+                "description": "API密钥"
+              },
+              {
+                "key": "app_secret",
+                "label": "App Secret",
+                "type": "textarea",
+                "required": false,
+                "description": "App Secret（可选）"
+              }
+            ]
+          }
+        ],
+        "paymentMethods": [
+          {
+            "id": 11,
+            "sdk_app_id": "Silver",
+            "pay_name": "支付宝",
+            "selectedCardBrand": "",
+            "channel_ids": [
+              "alipay_2088123456789012"
+            ],
+            "channel_id": "alipay_2088123456789012",
+            "icon_url": "https://cdn.example.com/payment-icons/alipay.png",
+            "status": "enabled",
+            "display_text": "支付宝"
+          },
+          {
+            "id": 12,
+            "sdk_app_id": "Silver",
+            "pay_name": "微信支付",
+            "selectedCardBrand": "",
+            "channel_ids": [
+              "wechat_wx1234567890abcdef"
+            ],
+            "channel_id": "wechat_wx1234567890abcdef",
+            "icon_url": "https://cdn.example.com/payment-icons/wechat.png",
+            "status": "enabled",
+            "display_text": "微信支付"
+          }
+        ],
+        "currencies": [
+          {
+            "code": "USD",
+            "name": "美元 (US Dollar)"
+          },
+          {
+            "code": "CNY",
+            "name": "人民币 (Chinese Yuan)"
+          },
+          {
+            "code": "EUR",
+            "name": "欧元 (Euro)"
+          },
+          {
+            "code": "GBP",
+            "name": "英镑 (British Pound)"
+          },
+          {
+            "code": "JPY",
+            "name": "日元 (Japanese Yen)"
+          },
+          {
+            "code": "KRW",
+            "name": "韩元 (Korean Won)"
+          },
+          {
+            "code": "CAD",
+            "name": "加元 (Canadian Dollar)"
+          },
+          {
+            "code": "AUD",
+            "name": "澳元 (Australian Dollar)"
+          }
+        ],
+        "languages": [
+          {
+            "code": "en",
+            "name": "English"
+          },
+          {
+            "code": "zh",
+            "name": "中文"
+          },
+          {
+            "code": "ja",
+            "name": "日本語"
+          },
+          {
+            "code": "ko",
+            "name": "한국어"
+          }
+        ]
+      },
+      "scenarioPlatform": {
+        "scenarios": [
+          {
+            "id": 1,
+            "key": "ios_iap",
+            "platform": "apple",
+            "payment_env": "Mobile",
+            "is_web_cashier": false,
+            "description": "【平台应用内购买】应用内 IAP：苹果 App Store 内购"
+          },
+          {
+            "id": 2,
+            "key": "android_iap",
+            "platform": "huawei",
+            "payment_env": "Mobile",
+            "is_web_cashier": false,
+            "description": "【平台应用内购买】应用内 IAP：手机厂商应用商城统一支付 SDK"
+          },
+          {
+            "id": 3,
+            "key": "android_web",
+            "platform": "vivo",
+            "payment_env": "Mobile",
+            "is_web_cashier": true,
+            "description": "【平台应用内购买】应用内三方支付：应用内自建原生收银台，跳转微信 App / 支付宝 App 支付",
+            "cashier_public_template_ids": [
+              "saki_CN_CNY"
+            ],
+            "cashier_default_public_template_id": "saki_CN_CNY"
+          },
+          {
+            "id": 4,
+            "key": "psn_iap",
+            "platform": "PSN",
+            "payment_env": "游戏主机",
+            "is_web_cashier": false,
+            "description": "【平台应用内购买】应用内 IAP：PlayStation 商店内购"
+          },
+          {
+            "id": 5,
+            "key": "windows_native_checkout",
+            "platform": "windows",
+            "payment_env": "PC",
+            "is_web_cashier": true,
+            "description": "【平台应用内购买】应用内三方支付：应用内自建原生收银台，微信 App / 支付宝 App 扫码支付"
+          },
+          {
+            "id": 6,
+            "key": "other_platforms",
+            "platform": "huawei",
+            "payment_env": "Mobile",
+            "is_web_cashier": false,
+            "description": "【平台应用内购买】其它平台（导图「…」：如鸿蒙等，可在此扩展配置）"
+          }
+        ],
+        "iapGoods": [
+          {
+            "gameGoodsId": 20000021,
+            "goodsName": "新拓名6",
+            "sku": "com.he.silver.diamond6",
+            "skuType": "消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20100006,
+            "goodsName": "每周6充值卡",
+            "sku": "com.he.silver.weekly6",
+            "skuType": "订阅型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000022,
+            "goodsName": "钻石B",
+            "sku": "com.he.silver.diamondB",
+            "skuType": "消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000023,
+            "goodsName": "钻石C",
+            "sku": "com.he.silver.diamondC",
+            "skuType": "消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000024,
+            "goodsName": "月卡",
+            "sku": "com.he.silver.monthly",
+            "skuType": "订阅型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000025,
+            "goodsName": "季卡",
+            "sku": "com.he.silver.quarterly",
+            "skuType": "订阅型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 20000026,
+            "goodsName": "限定礼包A",
+            "sku": "com.he.silver.giftA",
+            "skuType": "非消耗型",
+            "scenario": "ios_iap"
+          },
+          {
+            "gameGoodsId": 30000001,
+            "goodsName": "Android钻石A",
+            "sku": "com.he.silver.gp.diamondA",
+            "skuType": "消耗型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 30000002,
+            "goodsName": "Android IAP月卡",
+            "sku": "com.he.silver.gp.monthly",
+            "skuType": "订阅型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 30000003,
+            "goodsName": "Android钻石B",
+            "sku": "com.he.silver.gp.diamondB",
+            "skuType": "消耗型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 30000004,
+            "goodsName": "Android季卡",
+            "sku": "com.he.silver.gp.quarterly",
+            "skuType": "订阅型",
+            "scenario": "android_iap"
+          },
+          {
+            "gameGoodsId": 50000001,
+            "goodsName": "PS5钻石包",
+            "sku": "SILVER00001",
+            "skuType": "消耗型",
+            "scenario": "psn_iap"
+          },
+          {
+            "gameGoodsId": 50000002,
+            "goodsName": "PS5月卡",
+            "sku": "SILVER00002",
+            "skuType": "订阅型",
+            "scenario": "psn_iap"
+          },
+          {
+            "gameGoodsId": 50000003,
+            "goodsName": "PS5限定礼包",
+            "sku": "SILVER00003",
+            "skuType": "非消耗型",
+            "scenario": "psn_iap"
+          }
+        ],
+        "goods": [
+          {
+            "id": 6,
+            "app_id": "saki_CN",
+            "name": "100 金币",
+            "game_product_id": "coin_100",
+            "price": 68,
+            "currency": "CNY",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-03 10:00:00"
+          },
+          {
+            "id": 7,
+            "app_id": "saki_CN",
+            "name": "500 金币",
+            "game_product_id": "coin_500",
+            "price": 328,
+            "currency": "CNY",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-03 10:00:00"
+          },
+          {
+            "id": 8,
+            "app_id": "saki_CN",
+            "name": "1000 金币",
+            "game_product_id": "coin_1000",
+            "price": 648,
+            "currency": "CNY",
+            "status": 1,
+            "goods_type": 1,
+            "create_time": "2024-01-03 10:00:00"
+          },
+          {
+            "id": 9,
+            "app_id": "saki_CN",
+            "name": "2000 金币",
+            "game_product_id": "coin_2000",
+            "price": 1280,
+            "currency": "CNY",
+            "status": 0,
+            "goods_type": 1,
+            "create_time": "2024-01-04 10:00:00"
+          },
+          {
+            "id": 21,
+            "app_id": "game3_CN",
+            "name": "新手礼包",
+            "game_product_id": "pack_newbie",
+            "price": 30,
+            "currency": "CNY",
+            "status": 1,
+            "goods_type": 2,
+            "create_time": "2024-01-09 10:00:00"
+          },
+          {
+            "id": 22,
+            "app_id": "game3_CN",
+            "name": "豪华礼包",
+            "game_product_id": "pack_luxury",
+            "price": 198,
+            "currency": "CNY",
+            "status": 1,
+            "goods_type": 2,
+            "create_time": "2024-01-09 10:00:00"
+          },
+          {
+            "id": 23,
+            "app_id": "game3_CN",
+            "name": "超级礼包",
+            "game_product_id": "pack_super",
+            "price": 648,
+            "currency": "CNY",
+            "status": 0,
+            "goods_type": 2,
+            "create_time": "2024-01-09 10:00:00"
+          }
+        ]
+      },
+      "cashier": {
+        "sortTemplates": [
+          {
+            "app_id": "saki_CN",
+            "country_code": "CN",
+            "currency": "CNY",
+            "payment_env": "android",
+            "is_web_cashier": true,
+            "method_count": 2,
+            "recommended_count": 2,
+            "publish_status": "published"
+          }
+        ],
+        "paymentInfoCollection": {
+          "listRows": [
+            {
+              "app_id": "saki_CN",
+              "country_code": "CN",
+              "currency": "CNY",
+              "payment_env": "pc",
+              "is_web_cashier": true,
+              "collect_postal_code": false,
+              "collect_email": true
+            },
+            {
+              "app_id": "saki_CN",
+              "country_code": "CN",
+              "currency": "CNY",
+              "payment_env": "android",
+              "is_web_cashier": false,
+              "collect_postal_code": false,
+              "collect_email": true
+            }
+          ],
+          "detailByKey": {
+            "saki_CN_CNY_CN_pc_web": {
+              "app_id": "saki_CN",
+              "country_code": "CN",
+              "currency": "CNY",
+              "payment_env": "pc",
+              "is_web_cashier": true,
+              "collect_postal_code": false,
+              "collect_email": true
+            },
+            "saki_CN_CNY_CN_pc": {
+              "app_id": "saki_CN",
+              "country_code": "CN",
+              "currency": "CNY",
+              "payment_env": "pc",
+              "is_web_cashier": false,
+              "collect_postal_code": false,
+              "collect_email": true
+            }
+          }
+        }
+      },
+      "gameApplications": {
+        "games": [
+          {
+            "id": 1,
+            "sdk_app_id": "Silver",
+            "game_name": "Silver",
+            "apps": [
+              {
+                "app_id": "saki_CN",
+                "app_name": "Silver - CN",
+                "game_name": "Silver",
+                "platform": "store_cn",
+                "server_node": "CN",
+                "region": "CN",
+                "country_code": "CN",
+                "pay_switch": true,
+                "create_time": "2024-01-02 10:00:00"
+              },
+              {
+                "app_id": "game3_CN",
+                "app_name": "Silver - CN (game3)",
+                "game_name": "Silver",
+                "platform": "store_cn",
+                "server_node": "CN",
+                "region": "CN",
+                "country_code": "CN",
+                "pay_switch": true,
+                "create_time": "2024-01-07 10:00:00"
+              }
+            ]
+          }
+        ],
+        "apps": [
+          {
+            "app_id": "saki_CN",
+            "app_name": "Silver - CN",
+            "game_name": "Silver",
+            "platform": "store_cn",
+            "server_node": "CN",
+            "region": "CN",
+            "country_code": "CN",
+            "pay_switch": true,
+            "create_time": "2024-01-02 10:00:00"
+          },
+          {
+            "app_id": "game3_CN",
+            "app_name": "Silver - CN (game3)",
+            "game_name": "Silver",
+            "platform": "store_cn",
+            "server_node": "CN",
+            "region": "CN",
+            "country_code": "CN",
+            "pay_switch": true,
+            "create_time": "2024-01-07 10:00:00"
+          }
+        ]
+      },
+      "orderConfigDefault": {
+        "timeout_value": 30,
+        "timeout_unit": "minute"
+      }
+    }
+  }
+}
