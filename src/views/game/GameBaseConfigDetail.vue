@@ -93,7 +93,7 @@
 
     <div v-if="mode !== 'view'" class="form-footer form-footer--sticky">
       <p v-if="!hasUnsavedChanges" class="footer-hint">当前无未保存修改，保存类操作暂不可用。</p>
-      <p v-else class="footer-hint">有未保存修改：「仅保存」只落库不发布；「保存+部署」落库并发布到运行环境。</p>
+      <p v-else class="footer-hint">有未保存修改：「仅保存」只落库不发布；「保存+发布」落库并发布到运行环境。</p>
       <div class="footer-actions">
         <button
           class="btn btn-secondary btn-lg footer-btn-save"
@@ -109,7 +109,7 @@
           :disabled="!hasUnsavedChanges"
           @click="handleSaveAndDeploy"
         >
-          保存+部署
+          保存+发布
         </button>
       </div>
     </div>
