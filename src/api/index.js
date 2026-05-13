@@ -81,6 +81,10 @@ export const paymentAPI = {
     return mockAPI.setCashierTemplateOnline(data)
   },
 
+  saveCashierTemplateDisplayName(data) {
+    return mockAPI.saveCashierTemplateDisplayName(data)
+  },
+
   setCashierTemplateDefault(data) {
     return mockAPI.setCashierTemplateDefault(data)
   },

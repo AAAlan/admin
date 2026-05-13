@@ -91,15 +91,27 @@
       </div>
     </div>
 
-    <div class="form-footer">
-      <button
-        class="btn btn-primary"
-        type="button"
-        :disabled="mode === 'view' || !hasUnsavedChanges"
-        @click="handleSubmit"
-      >
-        发布
-      </button>
+    <div v-if="mode !== 'view'" class="form-footer form-footer--sticky">
+      <p v-if="!hasUnsavedChanges" class="footer-hint">当前无未保存修改，保存类操作暂不可用。</p>
+      <p v-else class="footer-hint">有未保存修改：「仅保存」只落库不发布；「保存+部署」落库并发布到运行环境。</p>
+      <div class="footer-actions">
+        <button
+          class="btn btn-secondary btn-lg footer-btn-save"
+          type="button"
+          :disabled="!hasUnsavedChanges"
+          @click="handleSaveOnly"
+        >
+          仅保存
+        </button>
+        <button
+          class="btn btn-primary btn-lg footer-btn-deploy"
+          type="button"
+          :disabled="!hasUnsavedChanges"
+          @click="handleSaveAndDeploy"
+        >
+          保存+部署
+        </button>
+      </div>
     </div>
 
     <Modal v-model:visible="addModalVisible" title="新增" size="large" @close="onAddModalClose">
@@ -374,21 +386,38 @@ export default {
         }
       }, 600)
     },
-    async handleSubmit() {
+    async handleSaveOnly() {
       if (this.mode === 'view' || !this.hasUnsavedChanges) return
       try {
         await this.$confirm.confirm({
           type: 'warning',
-          title: '保存游戏发货配置',
-          message: '确认保存当前修改吗？保存后配置才会生效。'
+          title: '仅保存',
+          message: '确认仅保存当前修改吗？配置将写入后台，但不会触发部署到运行环境。'
         })
       } catch {
         return
       }
       this.markAsSaved()
-      this.$message.success('保存成功')
+      this.$message.success('已保存（未部署）')
       if (this.embedInDrawer) {
-        this.$emit('saved')
+        this.$emit('saved', { deployed: false })
+      }
+    },
+    async handleSaveAndDeploy() {
+      if (this.mode === 'view' || !this.hasUnsavedChanges) return
+      try {
+        await this.$confirm.confirm({
+          type: 'warning',
+          title: '保存并部署',
+          message: '确认保存并部署吗？配置将写入后台并发布到运行环境，请谨慎操作。'
+        })
+      } catch {
+        return
+      }
+      this.markAsSaved()
+      this.$message.success('保存并部署成功')
+      if (this.embedInDrawer) {
+        this.$emit('saved', { deployed: true })
       }
     }
   }
@@ -542,12 +571,57 @@ export default {
 
 .form-footer {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-md);
-  padding-top: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border-secondary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #f7faff 0%, #ffffff 55%);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.form-footer--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+.footer-hint {
+  flex: 1 1 220px;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+.footer-btn-save {
+  min-width: 104px;
+  font-weight: 500;
+}
+
+.footer-btn-deploy {
+  min-width: 128px;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(22, 119, 255, 0.28);
+}
+
+.form-footer .btn:disabled {
+  opacity: 0.88;
+  color: #595959;
+  border-color: #d9d9d9;
+  background-color: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .readonly-value {

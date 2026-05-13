@@ -706,6 +706,42 @@ function writePaymentSortOfflineKeys(set) {
   localStorage.setItem(PAYMENT_SORT_OFFLINE_KEYS, JSON.stringify([...set]))
 }
 
+const PAYMENT_SORT_DISPLAY_NAMES_KEY = 'payment_sort_cashier_display_names_v1'
+
+function readPaymentSortDisplayNames() {
+  try {
+    const raw = localStorage.getItem(PAYMENT_SORT_DISPLAY_NAMES_KEY)
+    const obj = raw ? JSON.parse(raw) : {}
+    return obj && typeof obj === 'object' ? obj : {}
+  } catch {
+    return {}
+  }
+}
+
+function writePaymentSortDisplayNames(mapObj) {
+  try {
+    localStorage.setItem(PAYMENT_SORT_DISPLAY_NAMES_KEY, JSON.stringify(mapObj || {}))
+  } catch {
+    // ignore localStorage errors in mock mode
+  }
+}
+
+/** 列表展示用：自定义「收银台模版名称」，未配置时回退为 public_template_id */
+function mergeCashierTemplateDisplayNames(list) {
+  if (!Array.isArray(list)) return list
+  const map = readPaymentSortDisplayNames()
+  return list.map((item) => {
+    const rk = paymentSortRowKey(item)
+    const custom = String(map[rk] || '').trim()
+    const fallback = getCashierPublicTemplateId(item)
+    return {
+      ...item,
+      cashier_template_name: custom || fallback,
+      cashier_template_name_custom: custom
+    }
+  })
+}
+
 function defaultTemplateScopeKey(params = {}) {
   const region = params.region || 'overseas'
   const scenario = params.scenario || 'global'
@@ -1025,7 +1061,8 @@ export const mockPaymentSortListDomestic = [
     is_web_cashier: true,
     method_count: 2,
     recommended_count: 2,
-    publish_status: 'published'
+    publish_status: 'published',
+    is_simulator: false
   },
   {
     app_id: 'saki_CN',
@@ -1035,7 +1072,8 @@ export const mockPaymentSortListDomestic = [
     is_web_cashier: false,
     method_count: 1,
     recommended_count: 1,
-    publish_status: 'published'
+    publish_status: 'published',
+    is_simulator: false
   }
 ]
 
@@ -1304,6 +1342,81 @@ export const mockPaymentInfoConfigListRows = [
     collect_email: true
   }
 ]
+
+function mergeSortListCollectPostalFromPaymentInfo(list) {
+  if (!Array.isArray(list)) return list
+  return list.map((item) => {
+    const match = mockPaymentInfoConfigListRows.find(
+      (r) =>
+        r.app_id === item.app_id &&
+        r.country_code === item.country_code &&
+        r.currency === item.currency &&
+        String(r.payment_env || '') === String(item.payment_env || '') &&
+        !!r.is_web_cashier === !!item.is_web_cashier
+    )
+    return {
+      ...item,
+      collect_postal_code: match ? !!match.collect_postal_code : false
+    }
+  })
+}
+
+function mergeSortListCollectPostalFromPersistedStore(list, params = {}) {
+  if (!Array.isArray(list)) return list
+  const region = isDomesticRegion(params) ? 'domestic' : 'overseas'
+  try {
+    const raw = localStorage.getItem(PAYMENT_SORT_CONFIG_STORAGE_KEY)
+    const store = raw ? JSON.parse(raw) : {}
+    if (!store || typeof store !== 'object') return list
+    return list.map((item) => {
+      const key = [
+        region,
+        item.app_id || '',
+        item.country_code || '',
+        item.currency || '',
+        item.payment_env || '',
+        item.is_web_cashier ? 'web' : 'nonweb'
+      ].join('|')
+      const persisted = store[key]
+      if (persisted && persisted.collect_postal_code !== undefined) {
+        return { ...item, collect_postal_code: !!persisted.collect_postal_code }
+      }
+      return item
+    })
+  } catch {
+    return list
+  }
+}
+
+function mergeSortListSimulatorFromPersistedStore(list, params = {}) {
+  if (!isDomesticRegion(params)) {
+    return list.map((item) => ({ ...item, is_simulator: false }))
+  }
+  try {
+    const raw = localStorage.getItem(PAYMENT_SORT_CONFIG_STORAGE_KEY)
+    const store = raw ? JSON.parse(raw) : {}
+    if (!store || typeof store !== 'object') {
+      return list.map((item) => ({ ...item, is_simulator: !!item.is_simulator }))
+    }
+    return list.map((item) => {
+      const key = [
+        'domestic',
+        item.app_id || '',
+        item.country_code || '',
+        item.currency || '',
+        item.payment_env || '',
+        item.is_web_cashier ? 'web' : 'nonweb'
+      ].join('|')
+      const persisted = store[key]
+      if (persisted && persisted.is_simulator !== undefined) {
+        return { ...item, is_simulator: !!persisted.is_simulator }
+      }
+      return { ...item, is_simulator: !!item.is_simulator }
+    })
+  } catch {
+    return list
+  }
+}
 
 export const mockPaymentInfoDetailMap = {
   saki_US_USD_US_pc_web: {
@@ -2125,6 +2238,9 @@ export const mockAPI = {
       }
       // 国内全局收银台模版固定保留 Web / 原生两条基线，不受历史删除缓存影响
       list = applyPaymentSortOfflineOverrides(list)
+      list = mergeCashierTemplateDisplayNames(list)
+      list = list.map((item) => ({ ...item, collect_postal_code: false }))
+      list = mergeSortListSimulatorFromPersistedStore(list, params)
       const page = params.page || 1
       const pageSize = params.page_size || 10
       const total = list.length
@@ -2164,6 +2280,10 @@ export const mockAPI = {
 
     result = applyPaymentSortDeletedFilter(result)
     result = applyPaymentSortOfflineOverrides(result)
+    result = mergeCashierTemplateDisplayNames(result)
+    result = mergeSortListCollectPostalFromPaymentInfo(result)
+    result = mergeSortListCollectPostalFromPersistedStore(result, params)
+    result = mergeSortListSimulatorFromPersistedStore(result, params)
 
     // 分页
     const page = params.page || 1
@@ -2231,6 +2351,31 @@ export const mockAPI = {
     }
   },
 
+  /** 保存收银台模版展示名称（Mock：localStorage；留空则恢复为系统自动模版标识） */
+  async saveCashierTemplateDisplayName(payload = {}) {
+    await delay()
+    const rowKey = paymentSortRowKey({
+      app_id: payload.app_id,
+      country_code: payload.country_code,
+      currency: payload.currency,
+      payment_env: payload.payment_env,
+      is_web_cashier: !!payload.is_web_cashier
+    })
+    const name = String(payload.cashier_template_name || '').trim()
+    const map = readPaymentSortDisplayNames()
+    if (!name) {
+      delete map[rowKey]
+    } else {
+      map[rowKey] = name
+    }
+    writePaymentSortDisplayNames(map)
+    return {
+      code: 200,
+      message: 'success',
+      data: {}
+    }
+  },
+
   /** 设为默认收银台模版（同一 scope 下仅允许一个默认） */
   async setCashierTemplateDefault(payload = {}) {
     await delay()
@@ -2269,6 +2414,16 @@ export const mockAPI = {
     const deleted = readPaymentSortDeletedKeys()
     deleted.add(rowKey)
     writePaymentSortDeletedKeys(deleted)
+
+    try {
+      const names = readPaymentSortDisplayNames()
+      if (names && names[rowKey]) {
+        delete names[rowKey]
+        writePaymentSortDisplayNames(names)
+      }
+    } catch {
+      // ignore
+    }
 
     const offline = readPaymentSortOfflineKeys()
     if (offline.has(rowKey)) {

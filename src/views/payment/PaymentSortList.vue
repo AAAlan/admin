@@ -92,10 +92,12 @@
       <table class="table" role="table" aria-label="支付方式排序列表">
         <thead>
           <tr role="row">
-            <th role="columnheader" scope="col">收银台模版ID</th>
+            <th role="columnheader" scope="col">收银台模版名称</th>
             <th role="columnheader" scope="col">国家/IP</th>
             <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col">模版类型</th>
+            <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col">模拟器</th>
             <th role="columnheader" scope="col">币种</th>
+            <th v-if="resolvedRegion !== 'domestic'" role="columnheader" scope="col">邮编收集</th>
             <th role="columnheader" scope="col">支付方式数量</th>
             <th role="columnheader" scope="col" class="th-pay-switch">
               <div class="pay-switch-th">
@@ -125,13 +127,21 @@
         <tbody>
           <tr v-for="item in sortList" :key="'sort_' + paymentSortRowKey(item)" role="row">
             <td role="cell">
-              <code class="channel-id">{{ getCashierTemplateId(item) }}</code>
+              <span class="template-display-name">{{ getCashierTemplateDisplayName(item) }}</span>
             </td>
             <td role="cell">{{ item.country_code }}</td>
             <td v-if="resolvedRegion === 'domestic'" role="cell">
               {{ formatDomesticCashierKind(item) }}
             </td>
+            <td v-if="resolvedRegion === 'domestic'" role="cell">
+              <span v-if="item.is_simulator" class="badge badge-success">是</span>
+              <span v-else class="badge badge-secondary">否</span>
+            </td>
             <td role="cell">{{ item.currency }}</td>
+            <td v-if="resolvedRegion !== 'domestic'" role="cell">
+              <span v-if="item.collect_postal_code" class="badge badge-success">开启</span>
+              <span v-else class="badge badge-secondary">关闭</span>
+            </td>
             <td role="cell">
               <span class="stat-number">{{ item.method_count }}</span>
               <span class="stat-unit">个</span>
@@ -142,7 +152,7 @@
                   type="checkbox"
                   :checked="isCashierTemplatePublished(item)"
                   :disabled="!!sortStatusToggling[sortRowToggleKey(item)]"
-                  :aria-label="`${getCashierTemplateId(item)} 模版发布开关`"
+                  :aria-label="`${getCashierTemplateDisplayName(item)} 模版发布开关`"
                   @change="onCashierPublishStatusChange(item, $event)"
                 />
                 <span class="channel-switch-slider" aria-hidden="true" />
@@ -403,6 +413,10 @@ export default {
     getCashierTemplateId(item) {
       return getCashierPublicTemplateId(item)
     },
+    getCashierTemplateDisplayName(item) {
+      const n = item && item.cashier_template_name != null ? String(item.cashier_template_name).trim() : ''
+      return n || this.getCashierTemplateId(item)
+    },
     handleEditSort(item) {
       this.drawerPayload = {
         app_id: item.app_id,
@@ -410,7 +424,13 @@ export default {
         currency: item.currency,
         payment_env: item.payment_env,
         is_web_cashier: item.is_web_cashier,
-        publish_status: this.normalizePublishStatus(item)
+        publish_status: this.normalizePublishStatus(item),
+        cashier_template_name: (() => {
+          const c = String(item.cashier_template_name_custom || '').trim()
+          return c || this.getCashierTemplateId(item)
+        })(),
+        collect_postal_code: !!item.collect_postal_code,
+        is_simulator: !!item.is_simulator
       }
       this.drawerReadonly = false
       this.drawerVisible = true
@@ -427,7 +447,13 @@ export default {
         currency: item.currency,
         payment_env: item.payment_env,
         is_web_cashier: item.is_web_cashier,
-        publish_status: this.normalizePublishStatus(item)
+        publish_status: this.normalizePublishStatus(item),
+        cashier_template_name: (() => {
+          const c = String(item.cashier_template_name_custom || '').trim()
+          return c || this.getCashierTemplateId(item)
+        })(),
+        collect_postal_code: !!item.collect_postal_code,
+        is_simulator: !!item.is_simulator
       }
       this.drawerReadonly = true
       this.drawerVisible = true
@@ -446,7 +472,7 @@ export default {
 
       event.target.checked = prev
 
-      const idLabel = this.getCashierTemplateId(item)
+      const idLabel = this.getCashierTemplateDisplayName(item)
       const msg = next
         ? `确定将收银台模版「${idLabel}」设为已发布吗？发布后模版将恢复为可用状态。`
         : `确定将收银台模版「${idLabel}」下线吗？下线后模版将不可用，可能影响线上真实交易，请谨慎操作。`
@@ -775,6 +801,13 @@ export default {
   display: flex;
   justify-content: flex-end;
   margin-bottom: var(--spacing-lg);
+}
+
+.template-display-name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  word-break: break-all;
 }
 
 </style>
