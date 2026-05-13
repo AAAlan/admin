@@ -277,18 +277,14 @@ export default {
     },
     applyScenarioData() {
       if (!this.scenario) return
-      const appKey = 'b6bd4d4b6c3fd880768c5e622a9994'
-      const webApiKey = '17vaIAw7iQdKR7uGmT94fWndwPDw7u'
-      this.detail = { appKey, webApiKey }
+      this.detail = { appKey: '', webApiKey: '' }
       this.forwardRows = cloneRows(seedForwardRows(false))
       this.markAsSaved()
     },
     applyRegion(region) {
       if (this.scenario) return
       const isCn = region === 'CN'
-      const appKey = 'b6bd4d4b6c3fd880768c5e622a9994'
-      const webApiKey = '17vaIAw7iQdKR7uGmT94fWndwPDw7u'
-      this.detail = { appKey, webApiKey }
+      this.detail = { appKey: '', webApiKey: '' }
       this.forwardRows = cloneRows(seedForwardRows(isCn))
       this.markAsSaved()
     },
