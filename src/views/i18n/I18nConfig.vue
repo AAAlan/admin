@@ -52,6 +52,7 @@
             <th>类别</th>
             <th>简体中文（原文）</th>
             <th v-for="lang in secondaryLangs" :key="lang.code">{{ lang.name }}</th>
+            <th>翻译状态</th>
             <th>使用位置</th>
             <th>更新时间</th>
             <th>操作</th>
@@ -59,7 +60,7 @@
         </thead>
         <tbody>
           <tr v-if="filteredEntries.length === 0">
-            <td :colspan="5 + secondaryLangs.length" class="empty-cell">暂无数据</td>
+            <td :colspan="7 + secondaryLangs.length" class="empty-cell">暂无数据</td>
           </tr>
           <tr v-for="entry in filteredEntries" :key="entry.key">
             <td>
@@ -72,6 +73,9 @@
             <td v-for="lang in secondaryLangs" :key="lang.code" class="cell-translation">
               <span v-if="entry[lang.code]" class="translation-text">{{ entry[lang.code] }}</span>
               <span v-else class="translation-empty">待翻译</span>
+            </td>
+            <td class="cell-status">
+              <span class="status-badge" :class="'status-badge--' + statusOf(entry)">{{ statusLabel(entry) }}</span>
             </td>
             <td class="cell-usedby">{{ entry.usedBy || '-' }}</td>
             <td class="cell-time">{{ formatTime(entry.updatedAt) }}</td>
@@ -170,6 +174,10 @@ export default {
       if (filled > 1) return 'partial'
       return 'empty'
     },
+    statusLabel(entry) {
+      const labels = { full: '已完成', partial: '部分翻译', empty: '待翻译' }
+      return labels[this.statusOf(entry)] || '-'
+    },
     countByStatus(status) {
       return this.allEntries.filter(e => this.statusOf(e) === status).length
     },
@@ -258,6 +266,18 @@ export default {
 .cell-translation { max-width: 150px; word-break: break-all; font-size: 13px; }
 .translation-text { color: #374151; }
 .translation-empty { color: #c0c5ce; font-style: italic; font-size: 12px; }
+.cell-status { white-space: nowrap; }
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-badge--full { background: rgba(82, 196, 26, 0.12); color: #389e0d; }
+.status-badge--partial { background: rgba(250, 173, 20, 0.15); color: #d48806; }
+.status-badge--empty { background: #f0f0f0; color: #8c8c8c; }
+
 .cell-usedby { font-size: 12px; color: #8f97a5; max-width: 140px; word-break: break-all; }
 .cell-time { font-size: 12px; color: #9aa4b2; white-space: nowrap; }
 
