@@ -80,7 +80,7 @@
 
         <div class="editor-body">
           <div v-for="type in AGREEMENT_TYPES" :key="type.code" class="link-field">
-            <label :for="`agreement-${type.code}-${activeLanguage}`">{{ type.name }}链接</label>
+            <label :for="`agreement-${type.code}-${activeLanguage}`">{{ type.name }}链接 <span class="required-mark" aria-hidden="true">*</span></label>
             <p>{{ type.code === 'user' ? '用户在收银台点击“用户协议”时将跳转至此页面。' : '用户在收银台点击“隐私政策”时将跳转至此页面。' }}</p>
             <div class="link-input-wrap">
               <Icon name="globe" :size="16" />
@@ -89,6 +89,7 @@
                 v-model="form[type.code][activeLanguage]"
                 type="url"
                 class="input"
+                required
                 :class="{ 'input--invalid': fieldError(type.code) }"
                 :placeholder="type.code === 'user' ? 'https://example.com/terms' : 'https://example.com/privacy'"
                 @input="touch(type.code)"
@@ -122,7 +123,6 @@ import {
   getPublishedEntry,
   saveEntry,
   publishEntry,
-  getFallbackLang,
   isValidUrl
 } from '@/utils/agreementLinks.js'
 
@@ -161,9 +161,6 @@ export default {
   computed: {
     resolvedRegion() {
       return this.region || this.$route.meta?.region || 'overseas'
-    },
-    fallbackLanguage() {
-      return getFallbackLang(this.resolvedRegion)
     },
     activeLanguageInfo() {
       return LANGUAGES.find(lang => lang.code === this.activeLanguage) || LANGUAGES[0]
@@ -220,7 +217,9 @@ export default {
     },
     fieldError(type) {
       if (!this.touched[`${type}_${this.activeLanguage}`]) return ''
-      return isValidUrl(this.form[type][this.activeLanguage]) ? '' : '请输入 http 或 https 开头的完整地址'
+      const value = String(this.form[type][this.activeLanguage] || '').trim()
+      if (!value) return '此链接为必填项'
+      return isValidUrl(value) ? '' : '请输入 http 或 https 开头的完整地址'
     },
     validate() {
       const touched = {}
@@ -228,20 +227,18 @@ export default {
         for (const type of AGREEMENT_TYPES) touched[`${type.code}_${lang.code}`] = true
       }
       this.touched = touched
+      const missing = AGREEMENT_TYPES.some(type =>
+        LANGUAGES.some(lang => !String(this.form[type.code][lang.code] || '').trim())
+      )
+      if (missing) {
+        this.$message.error('12 种语言的隐私协议和用户协议均为必填项，请补充完整')
+        return false
+      }
       const invalid = AGREEMENT_TYPES.some(type =>
         LANGUAGES.some(lang => !isValidUrl(this.form[type.code][lang.code]))
       )
       if (invalid) {
         this.$message.error('存在格式不正确的链接，请检查后再保存')
-        return false
-      }
-      const missingFallback = AGREEMENT_TYPES.filter(type => {
-        const links = this.form[type.code]
-        const hasAny = LANGUAGES.some(lang => String(links[lang.code] || '').trim())
-        return hasAny && !String(links[this.fallbackLanguage] || '').trim()
-      })
-      if (missingFallback.length) {
-        this.$message.error(`${missingFallback.map(type => type.name).join('、')}需要填写${this.fallbackLanguage === 'en' ? 'English' : '简体中文'}链接作为回落`)
         return false
       }
       return true
@@ -324,6 +321,7 @@ export default {
 .editor-body { padding: 28px; }
 .link-field + .link-field { margin-top: 28px; }
 .link-field label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 650; }
+.required-mark { color: #df4f5b; }
 .link-field p { margin: 0 0 10px; color: #929aa7; font-size: 12px; }
 .link-input-wrap { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border: 1px solid #dce1e8; border-radius: 8px; color: #8993a0; }
 .link-input-wrap:focus-within { border-color: #6572e8; box-shadow: 0 0 0 3px rgba(101, 114, 232, 0.12); }
