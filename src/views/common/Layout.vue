@@ -54,9 +54,21 @@
               </router-link>
             </li>
             <li class="nav-item">
+              <router-link to="/config-release" class="nav-link">
+                <span class="nav-icon" aria-hidden="true">◉</span>
+                <span>配置发布</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
               <router-link to="/scenario" class="nav-link">
                 <span class="nav-icon" aria-hidden="true">◉</span>
                 <span>支付场景管理</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/agreement/links" class="nav-link">
+                <span class="nav-icon" aria-hidden="true">◉</span>
+                <span>协议设置</span>
               </router-link>
             </li>
           </template>
@@ -90,6 +102,12 @@
               <router-link to="/domestic/game-ship-config" class="nav-link">
                 <span class="nav-icon" aria-hidden="true">◉</span>
                 <span>游戏发货配置</span>
+              </router-link>
+            </li>
+            <li class="nav-item">
+              <router-link to="/domestic/config-release" class="nav-link">
+                <span class="nav-icon" aria-hidden="true">◉</span>
+                <span>配置发布</span>
               </router-link>
             </li>
             <li class="nav-item">
@@ -422,5 +440,3 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 </style>
-
-

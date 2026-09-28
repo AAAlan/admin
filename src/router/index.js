@@ -89,6 +89,18 @@ const routes = [
         component: () => import('@/views/game/GameShipConfig.vue'),
         meta: { title: '游戏发货配置', region: 'overseas' }
       },
+      {
+        path: '/config-release',
+        name: 'ConfigReleaseDemo',
+        component: () => import('@/views/release/ConfigReleaseDemo.vue'),
+        meta: { title: '配置发布', region: 'overseas' }
+      },
+      {
+        path: '/agreement/links',
+        name: 'AgreementLinkList',
+        component: () => import('@/views/agreement/AgreementLinkList.vue'),
+        meta: { title: '协议设置', region: 'overseas' }
+      },
       { path: '/game-base-config', redirect: '/game-ship-config' },
       { path: '/goods/config', redirect: '/scenario' },
       {
@@ -152,7 +164,13 @@ const routes = [
         name: 'DomesticGameShipConfig',
         component: () => import('@/views/game/GameShipConfig.vue'),
         meta: { title: '游戏发货配置', region: 'domestic' }
-      }
+      },
+      {
+        path: '/domestic/config-release',
+        name: 'DomesticConfigReleaseDemo',
+        component: () => import('@/views/release/ConfigReleaseDemo.vue'),
+        meta: { title: '配置发布', region: 'domestic' }
+      },
     ]
   }
 ]

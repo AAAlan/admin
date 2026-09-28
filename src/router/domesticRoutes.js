@@ -51,5 +51,11 @@ export const domesticChildRoutes = [
     name: 'DomesticScenarioConfig',
     component: () => import('@/views/scenario/ScenarioConfig.vue'),
     meta: { title: '场景配置', region: 'domestic' }
+  },
+  {
+    path: '/config-release',
+    name: 'DomesticConfigReleaseDemo',
+    component: () => import('@/views/release/ConfigReleaseDemo.vue'),
+    meta: { title: '配置发布', region: 'domestic' }
   }
 ]

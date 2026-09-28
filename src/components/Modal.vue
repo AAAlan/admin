@@ -41,6 +41,8 @@
 <script>
 import Icon from './Icon.vue'
 
+let modalIdSeed = 0
+
 export default {
   name: 'Modal',
   components: {
@@ -82,12 +84,17 @@ export default {
     }
   },
   emits: ['update:visible', 'close'],
+  data() {
+    return {
+      modalId: `modal-title-${++modalIdSeed}`
+    }
+  },
   computed: {
     sizeClass() {
       return `modal-${this.size}`
     },
     titleId() {
-      return `modal-title-${this._uid}`
+      return this.modalId
     }
   },
   watch: {
@@ -240,4 +247,3 @@ export default {
   opacity: 0;
 }
 </style>
-
