@@ -73,6 +73,10 @@ export const paymentAPI = {
     return mockAPI.getPaymentSortList(params)
   },
 
+  saveCashierTemplate(data) {
+    return mockAPI.saveCashierTemplate(data)
+  },
+
   setCashierTemplateOffline(data) {
     return mockAPI.setCashierTemplateOffline(data)
   },

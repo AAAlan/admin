@@ -10,7 +10,7 @@
         :aria-labelledby="titleId"
       >
         <div
-          :class="['modal', sizeClass]"
+          :class="['modal', sizeClass, variant && `modal--${variant}`]"
           @click.stop
         >
           <div class="modal-header">
@@ -42,6 +42,20 @@
 import Icon from './Icon.vue'
 
 let modalIdSeed = 0
+const activeModalIds = new Set()
+let originalBodyOverflow = ''
+
+function updateModalScrollLock(id, visible) {
+  if (typeof document === 'undefined') return
+  if (visible) {
+    if (activeModalIds.size === 0) originalBodyOverflow = document.body.style.overflow
+    activeModalIds.add(id)
+  } else {
+    if (!activeModalIds.has(id)) return
+    activeModalIds.delete(id)
+  }
+  document.body.style.overflow = activeModalIds.size > 0 ? 'hidden' : originalBodyOverflow
+}
 
 export default {
   name: 'Modal',
@@ -49,6 +63,10 @@ export default {
     Icon
   },
   props: {
+    variant: {
+      type: String,
+      default: ''
+    },
     visible: {
       type: Boolean,
       default: false
@@ -98,16 +116,15 @@ export default {
     }
   },
   watch: {
-    visible(newVal) {
-      if (newVal) {
-        document.body.style.overflow = 'hidden'
-      } else {
-        document.body.style.overflow = ''
+    visible: {
+      immediate: true,
+      handler(newVal) {
+        updateModalScrollLock(this.modalId, newVal)
       }
     }
   },
   beforeUnmount() {
-    document.body.style.overflow = ''
+    updateModalScrollLock(this.modalId, false)
   },
   methods: {
     handleClose() {
@@ -245,5 +262,28 @@ export default {
 .modal-leave-to .modal {
   transform: scale(0.9);
   opacity: 0;
+}
+
+.modal--cashier {
+  max-width: 880px;
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+.modal--cashier .modal-header {
+  padding: 0;
+  margin-bottom: 8px;
+  border: 0;
+  flex-shrink: 0;
+}
+.modal--cashier .modal-title { font-size: 16px; line-height: 24px; }
+.modal--cashier .modal-close { padding: 0; color: #999; }
+.modal--cashier .modal-body { padding: 0; margin: 0 -24px -24px; padding: 0 24px 24px; }
+@media (max-width: 640px) {
+  .modal-overlay { padding: 12px; }
+  .modal--cashier { padding: 16px; }
+  .modal--cashier .modal-body { margin: 0 -16px -16px; padding: 0 16px 16px; }
 }
 </style>

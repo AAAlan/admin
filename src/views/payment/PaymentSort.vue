@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container" :class="{ 'is-readonly': readonly }">
+  <div class="page-container cashier-config" :class="{ 'is-readonly': readonly, 'cashier-config--embedded': mode !== 'page' }">
     <div v-if="mode === 'page'" class="page-header">
       <h1 class="page-title">全局收银台模版</h1>
       <router-link
@@ -22,7 +22,7 @@
           <div class="config-fields-list">
             <div class="form-group form-group--template-name">
               <label for="sort-cashier-name" class="form-label">
-                收银台模版名称 <span class="required">*</span>
+                <span class="required">*</span> 收银台模版名称
               </label>
               <input
                 id="sort-cashier-name"
@@ -31,7 +31,7 @@
                 class="input"
                 :class="{ 'input--invalid': config.cashier_template_name && !isCashierTemplateNameValid }"
                 :disabled="readonly"
-                placeholder="例如 saki_usd_web_main"
+                placeholder="请输入收银台模版名称"
                 maxlength="64"
                 autocomplete="off"
               />
@@ -43,40 +43,34 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="sort-country" class="form-label">
-                国家/IP <span class="required">*</span>
-              </label>
-              <select
-                id="sort-country"
-                v-model="config.country_code"
-                class="select"
-                :disabled="readonly || lockDomesticBasicFields"
-                @change="handleCountryChange"
-                required
-                aria-required="true"
-              >
-                <option value="">请选择国家/IP</option>
-                <option value="US">US - 美国</option>
-                <option value="CN">CN - 中国</option>
-                <option value="JP">JP - 日本</option>
-                <option value="KR">KR - 韩国</option>
-                <option value="GB">GB - 英国</option>
-                <option value="DE">DE - 德国</option>
-                <option value="FR">FR - 法国</option>
-                <option value="CA">CA - 加拿大</option>
-                <option value="AU">AU - 澳大利亚</option>
-              </select>
+            <div class="form-group form-group--simulator">
+              <div class="simulator-switch-head">
+                <span id="sort-simulator-label" class="form-label">模拟器模式</span>
+                <div class="switch-group simulator-switch" @click.stop>
+                  <label class="switch">
+                    <input
+                      v-model="config.is_simulator"
+                      type="checkbox"
+                      :disabled="readonly"
+                      :aria-labelledby="'sort-simulator-label'"
+                    />
+                    <span class="switch-slider" />
+                  </label>
+                  <span v-if="paymentRegion === 'domestic'" class="switch-label">{{ config.is_simulator ? '模拟器' : '非模拟器' }}</span>
+                </div>
+              </div>
+              <p v-if="paymentRegion === 'domestic'" class="form-hint">开启后按<strong>模拟器环境</strong>运行该收银台模版；关闭为正常设备环境。</p>
             </div>
 
             <div class="form-group">
               <label for="sort-currency" class="form-label">
-                币种 <span class="required">*</span>
+                <span class="required">*</span> 币种
               </label>
               <select
                 id="sort-currency"
                 v-model="config.currency_code"
                 class="select"
+                :class="{ 'select--empty': !config.currency_code }"
                 :disabled="readonly || lockDomesticBasicFields"
                 @change="handleCurrencyChange"
                 required
@@ -87,27 +81,6 @@
                   {{ currency.code }} - {{ currency.name }}
                 </option>
               </select>
-            </div>
-
-            <div v-if="paymentRegion !== 'domestic'" class="form-group form-group--collect-postal">
-              <div class="collect-postal-head">
-                <span id="sort-collect-postal-label" class="form-label">邮编收集</span>
-                <div class="switch-group collect-postal-switch" @click.stop>
-                  <label class="switch">
-                    <input
-                      v-model="config.collect_postal_code"
-                      type="checkbox"
-                      :disabled="readonly"
-                      :aria-labelledby="'sort-collect-postal-label'"
-                    />
-                    <span class="switch-slider" />
-                  </label>
-                  <span class="switch-label">{{ config.collect_postal_code ? '开启' : '关闭' }}</span>
-                </div>
-              </div>
-              <p class="form-hint">
-                开启后，海外收银台将引导用户填写邮编，用于税费计算或部分卡渠道风控；可按模版单独控制，与「收银台账单信息收集」能力对齐。
-              </p>
             </div>
 
             <div v-if="showDomesticTemplateTypeField" class="form-group">
@@ -145,24 +118,7 @@
               </p>
             </div>
 
-            <div v-if="paymentRegion === 'domestic'" class="form-group form-group--simulator">
-              <div class="simulator-switch-head">
-                <span id="sort-simulator-label" class="form-label">模拟器</span>
-                <div class="switch-group simulator-switch" @click.stop>
-                  <label class="switch">
-                    <input
-                      v-model="config.is_simulator"
-                      type="checkbox"
-                      :disabled="readonly"
-                      :aria-labelledby="'sort-simulator-label'"
-                    />
-                    <span class="switch-slider" />
-                  </label>
-                  <span class="switch-label">{{ config.is_simulator ? '模拟器' : '非模拟器' }}</span>
-                </div>
-              </div>
-              <p class="form-hint">开启后按<strong>模拟器环境</strong>运行该收银台模版；关闭为正常设备环境。</p>
-            </div>
+
           </div>
         </div>
       </div>
@@ -172,42 +128,27 @@
           <div class="card-header-content">
             <div>
               <h2 class="card-title">支付方式配置</h2>
-              <p class="card-desc">拖拽调整顺序，排在前面的支付方式会优先展示给用户。可为每条方式单独启用或禁用。</p>
             </div>
-            <button
-              v-if="!readonly"
-              class="btn btn-primary"
-              :disabled="!isConfigReady"
-              @click="handleAddMethod"
-              aria-label="添加支付方式"
-            >
-              <Icon name="plus" :size="16" />
-              <span>添加支付方式</span>
-            </button>
           </div>
+          <p class="card-desc">拖拽调整顺序，排在前面的支付方式会优先展示给用户。可为每条方式单独启用或禁用。</p>
         </div>
         <div class="card-body">
           <div class="config-info">
-            <span class="info-tag">应用: {{ config.app_id }}</span>
             <span class="info-tag">币种: {{ config.currency_code || '未选择' }}</span>
-            <span class="info-tag">国家/IP: {{ config.country_code || '未选择' }}</span>
             <span v-if="paymentRegion === 'domestic'" class="info-tag">
               模版类型: {{ config.is_web_cashier ? 'Web 收银台' : '原生收银台' }}
             </span>
             <span v-if="paymentRegion === 'domestic'" class="info-tag">
               模拟器: {{ config.is_simulator ? '是' : '否' }}
             </span>
-            <span v-if="paymentRegion !== 'domestic'" class="info-tag">
-              邮编收集: {{ config.collect_postal_code ? '开启' : '关闭' }}
-            </span>
           </div>
           <p v-if="!isConfigReady" class="form-hint config-waiting-hint">
-            请先选择币种和国家/IP，再配置支付方式排序与开关。
+            请先选择币种，再配置支付方式排序与开关。
           </p>
           <div v-else class="sortable-list">
             <div
               v-for="(method, index) in channelList"
-              :key="method.id"
+              :key="`${method.channel_id}::${method.pay_name}`"
               class="sortable-item"
               :class="{ 'sortable-item--disabled': method.enabled === false }"
               :draggable="!readonly"
@@ -293,11 +234,11 @@
                 </div>
                 <button
                   v-if="!readonly"
-                  class="btn btn-icon btn-danger-text"
+                  class="btn btn-text btn-danger-text"
                   @click.stop="handleRemoveMethod(index)"
-                  :aria-label="`删除 ${method.pay_name}`"
+                  :aria-label="`移除 ${method.pay_name}`"
                 >
-                  <Icon name="delete" :size="16" />
+                  移除
                 </button>
               </div>
             </div>
@@ -305,33 +246,36 @@
 
           <div v-if="isConfigReady && channelList.length === 0" class="empty-state">
             <p>暂无支付方式</p>
-            <button v-if="!readonly" class="btn btn-primary" @click="handleAddMethod">
-              <Icon name="plus" :size="16" />
-              <span>添加支付方式</span>
-            </button>
           </div>
+          <button v-if="!readonly && isConfigReady" class="btn btn-secondary add-method-button" @click="handleAddMethod" aria-label="添加支付方式">
+            <Icon name="plus" :size="16" />
+            <span>添加支付方式</span>
+          </button>
         </div>
       </div>
 
-      <div v-if="!readonly" class="form-footer">
+      <div v-if="!readonly || mode !== 'page'" class="form-footer">
         <button
           type="button"
           class="btn btn-primary"
-          :disabled="!isConfigReady || !hasChanges || saving || !isCashierTemplateNameValid"
+          v-if="!readonly"
+          :disabled="saving || loadingChannels"
           @click="handleSave"
           :aria-label="primarySaveAriaLabel"
         >
-          <Icon v-if="!saving" name="check" :size="16" />
           <span>{{ saving ? primarySavePendingLabel : primarySaveLabel }}</span>
         </button>
         <button
           type="button"
           class="btn btn-secondary"
+          v-if="!readonly"
           @click="handleReset"
+          :disabled="saving || loadingChannels"
           aria-label="重置"
         >
           <span>重置</span>
         </button>
+        <button v-if="mode !== 'page'" type="button" class="btn btn-secondary" @click="$emit('cancel')" aria-label="关闭配置">关闭</button>
       </div>
     </div>
 
@@ -340,8 +284,7 @@
       v-model:visible="showMethodSelector"
       :app-id="config.app_id"
       :currency="config.currency_code"
-      :country-code="config.country_code"
-      :exclude-ids="channelList.map(m => m.id)"
+      :exclude-ids="channelList.map(m => `${m.channel_id}::${m.pay_name}`)"
       :contained="mode === 'drawer'"
       :region="paymentRegion"
       @confirm="handleMethodSelected"
@@ -361,14 +304,13 @@
 </template>
 
 <script>
-import { appAPI, configAPI, paymentAPI } from '@/api'
+import { paymentAPI } from '@/api'
 import Icon from '@/components/Icon.vue'
 import PaymentMethodSelector from './PaymentMethodSelector.vue'
-import { cashierGameNameFromAppId, getCashierPublicTemplateId } from '@/utils/cashierPublicTemplateId.js'
+import { cashierTemplateStorageKey, readCashierTemplateStore } from '@/utils/cashierTemplateStore.js'
+import { cashierCurrencies } from '@/utils/cashierCurrencies.js'
 import I18nTextEditor from '@/components/I18nTextEditor.vue'
 import { getEntry } from '@/utils/i18nTextStore.js'
-
-const PAYMENT_SORT_CONFIG_STORAGE_KEY = 'payment_sort_configs_v1'
 
 export default {
   name: 'PaymentSort',
@@ -396,29 +338,31 @@ export default {
     PaymentMethodSelector,
     I18nTextEditor
   },
-  emits: ['saved'],
+  emits: ['saved', 'cancel'],
   data() {
     return {
-      appList: [],
-      currencies: [],
+      currencies: cashierCurrencies,
       channelList: [],
       originalChannelList: [],
       config: {
+        template_id: '',
+        legacy_row_key: '',
         app_id: 'saki',
         currency_code: '',
+        // 旧模版的国家编码仅用于兼容历史存储标识，不参与配置或校验。
         country_code: '',
         payment_env: '',
         is_web_cashier: false,
         publish_status: 'offline',
         cashier_template_name: '',
-        collect_postal_code: false,
         is_simulator: false
       },
       originalPublishStatus: 'offline',
       originalCashierTemplateName: '',
-      originalCollectPostalCode: false,
       originalIsSimulator: false,
       saving: false,
+      loadingChannels: false,
+      originalConfig: null,
       draggedIndex: null,
       showMethodSelector: false,
       i18nEditorVisible: false,
@@ -452,7 +396,7 @@ export default {
       return false
     },
     isConfigReady() {
-      return !!(this.config.app_id && this.config.currency_code && this.config.country_code)
+      return !!(this.config.app_id && this.config.currency_code)
     },
     /** 收银台模版名称：必填 + 2～64，仅字母数字下划线连字符 */
     isCashierTemplateNameValid() {
@@ -460,24 +404,25 @@ export default {
       return /^[a-zA-Z0-9_-]{2,64}$/.test(t)
     },
     hasChanges() {
+      if (this.mode === 'modal') return true
       return (
         JSON.stringify(this.channelList) !== JSON.stringify(this.originalChannelList) ||
         this.config.publish_status !== this.originalPublishStatus ||
         String(this.config.cashier_template_name || '').trim() !==
           String(this.originalCashierTemplateName || '').trim() ||
-        !!this.config.collect_postal_code !== !!this.originalCollectPostalCode ||
         !!this.config.is_simulator !== !!this.originalIsSimulator
       )
     },
-    /** 创建弹窗：主操作即发布；抽屉/独立页仍用「确认」 */
     primarySaveLabel() {
-      return this.mode === 'modal' ? '发布' : '确认'
+      if (this.paymentRegion === 'domestic') return this.mode === 'modal' ? '发布' : '确认'
+      return '保存'
     },
     primarySavePendingLabel() {
-      return this.mode === 'modal' ? '发布中...' : '确认中...'
+      if (this.paymentRegion === 'domestic') return this.mode === 'modal' ? '发布中...' : '确认中...'
+      return '保存中...'
     },
     primarySaveAriaLabel() {
-      return this.mode === 'modal' ? '发布' : '确认'
+      return this.primarySaveLabel
     }
   },
   watch: {
@@ -494,71 +439,23 @@ export default {
       if (this.paymentRegion !== 'domestic' || this.mode !== 'modal') return
       this.channelList = []
       this.originalChannelList = []
-      if (this.config.app_id && this.config.currency_code && this.config.country_code) {
-        this.fetchChannels()
-      }
+      if (this.isConfigReady) this.fetchChannels()
     }
   },
   async mounted() {
-    await this.fetchApps()
-    await this.fetchCurrencies()
-
     // 页面模式继续兼容使用路由 query 预填充；抽屉模式则优先使用传入的 prefill
     await this.applyPrefill(this.prefill || this.$route.query)
   },
   methods: {
     getCurrentConfigKey() {
-      return [
-        this.paymentRegion || 'overseas',
-        this.config.app_id || '',
-        this.config.country_code || '',
-        this.config.currency_code || '',
-        this.config.payment_env || '',
-        this.config.is_web_cashier ? 'web' : 'nonweb'
-      ].join('|')
-    },
-    readPersistedConfigs() {
-      try {
-        const raw = localStorage.getItem(PAYMENT_SORT_CONFIG_STORAGE_KEY)
-        const parsed = raw ? JSON.parse(raw) : {}
-        return parsed && typeof parsed === 'object' ? parsed : {}
-      } catch {
-        return {}
-      }
-    },
-    writePersistedConfigs(payload) {
-      try {
-        localStorage.setItem(PAYMENT_SORT_CONFIG_STORAGE_KEY, JSON.stringify(payload || {}))
-      } catch {
-        // ignore storage errors in mock mode
-      }
+      return cashierTemplateStorageKey({ ...this.config, currency: this.config.currency_code }, this.paymentRegion)
     },
     readPersistedCurrentConfig() {
-      const store = this.readPersistedConfigs()
+      const store = readCashierTemplateStore()
       const key = this.getCurrentConfigKey()
       const item = store[key]
       if (!item || !Array.isArray(item.payment_methods)) return null
       return item
-    },
-    persistCurrentConfig() {
-      const store = this.readPersistedConfigs()
-      const key = this.getCurrentConfigKey()
-      store[key] = {
-        app_id: this.config.app_id,
-        country_code: this.config.country_code,
-        currency: this.config.currency_code,
-        payment_env: this.config.payment_env,
-        is_web_cashier: this.config.is_web_cashier,
-        publish_status: this.config.publish_status,
-        cashier_template_name: String(this.config.cashier_template_name || '').trim(),
-        collect_postal_code: this.paymentRegion !== 'domestic' && !!this.config.collect_postal_code,
-        is_simulator: this.paymentRegion === 'domestic' && !!this.config.is_simulator,
-        payment_methods: this.channelList.map((item, index) => ({
-          ...item,
-          sort_order: index + 1
-        }))
-      }
-      this.writePersistedConfigs(store)
     },
     async applyPrefill(source) {
       const src = source || {}
@@ -566,6 +463,8 @@ export default {
       this.saving = false
       this.showMethodSelector = false
       this.draggedIndex = null
+      this.config.template_id = src.template_id || ''
+      this.config.legacy_row_key = src.legacy_row_key || ''
 
       this.config.app_id = src.app_id || ''
       if (!this.config.app_id) this.config.app_id = 'saki'
@@ -588,23 +487,7 @@ export default {
       this.config.cashier_template_name =
         src.cashier_template_name != null ? String(src.cashier_template_name).trim() : ''
 
-      if (this.paymentRegion === 'domestic') {
-        this.config.collect_postal_code = false
-      } else if (src.collect_postal_code !== undefined && src.collect_postal_code !== null) {
-        this.config.collect_postal_code = src.collect_postal_code === true || src.collect_postal_code === 'true'
-      } else {
-        this.config.collect_postal_code = false
-      }
-
-      if (this.paymentRegion === 'domestic') {
-        if (src.is_simulator !== undefined && src.is_simulator !== null) {
-          this.config.is_simulator = src.is_simulator === true || src.is_simulator === 'true'
-        } else {
-          this.config.is_simulator = false
-        }
-      } else {
-        this.config.is_simulator = false
-      }
+      this.config.is_simulator = src.is_simulator === true || src.is_simulator === 'true'
 
       if (this.paymentRegion === 'domestic') {
         this.config.country_code = 'CN'
@@ -615,41 +498,14 @@ export default {
       this.channelList = []
       this.originalChannelList = []
 
-      // 如果关键参数都已填充，自动加载支付方式列表
-      if (this.config.app_id && this.config.currency_code && this.config.country_code) {
+      // Only existing templates load saved methods; new forms begin empty.
+      if ((this.mode !== 'modal' || this.paymentRegion === 'domestic') && this.isConfigReady) {
         await this.fetchChannels()
       }
       this.originalPublishStatus = this.config.publish_status
       this.originalCashierTemplateName = String(this.config.cashier_template_name || '').trim()
-      this.originalCollectPostalCode = !!this.config.collect_postal_code
       this.originalIsSimulator = !!this.config.is_simulator
-    },
-    async fetchApps() {
-      try {
-        const res = await appAPI.getApps()
-        if (res.code === 200) {
-          this.appList = res.data.list
-        }
-      } catch (err) {
-        console.error(err)
-      }
-    },
-    async fetchCurrencies() {
-      try {
-        // Mock数据 - 币种列表
-        this.currencies = [
-          { code: 'USD', name: '美元' },
-          { code: 'CNY', name: '人民币' },
-          { code: 'EUR', name: '欧元' },
-          { code: 'GBP', name: '英镑' },
-          { code: 'JPY', name: '日元' },
-          { code: 'KRW', name: '韩元' },
-          { code: 'CAD', name: '加元' },
-          { code: 'AUD', name: '澳元' }
-        ]
-      } catch (err) {
-        console.error(err)
-      }
+      this.originalConfig = JSON.parse(JSON.stringify(this.config))
     },
     async handleAppChange() {
       if (!this.config.app_id) {
@@ -660,41 +516,24 @@ export default {
     },
     async handleCurrencyChange() {
       if (this.lockDomesticBasicFields) return
-      if (!this.config.currency_code) {
-        this.config.country_code = ''
-        this.channelList = []
-      }
-    },
-    async handleCountryChange() {
-      if (this.lockDomesticBasicFields) return
-      if (this.config.country_code) {
-        await this.fetchChannels()
-      } else {
-        this.channelList = []
-      }
+      this.channelList = []
     },
     async fetchChannels() {
-      if (!this.config.app_id || !this.config.currency_code || !this.config.country_code) {
+      if (!this.config.app_id || !this.config.currency_code) {
         return
       }
+      this.loadingChannels = true
       try {
         const persisted = this.readPersistedCurrentConfig()
         if (persisted) {
-          this.config.publish_status = persisted.publish_status || this.config.publish_status || 'offline'
+          if (!this.prefill?.publish_status) {
+            this.config.publish_status = persisted.publish_status || this.config.publish_status || 'offline'
+          }
           if (persisted.cashier_template_name !== undefined && persisted.cashier_template_name !== null) {
             this.config.cashier_template_name = String(persisted.cashier_template_name || '').trim()
           }
-          if (this.paymentRegion !== 'domestic' && persisted.collect_postal_code !== undefined) {
-            this.config.collect_postal_code = !!persisted.collect_postal_code
-          }
-          if (this.paymentRegion === 'domestic') {
-            this.config.collect_postal_code = false
-          }
-          if (this.paymentRegion === 'domestic' && persisted.is_simulator !== undefined) {
+          if (persisted.is_simulator !== undefined) {
             this.config.is_simulator = !!persisted.is_simulator
-          }
-          if (this.paymentRegion !== 'domestic') {
-            this.config.is_simulator = false
           }
           this.channelList = (persisted.payment_methods || []).map((m, index) => ({
             ...m,
@@ -704,12 +543,10 @@ export default {
             sort_order: index + 1,
             qr_scan_pay: this.paymentRegion === 'domestic' && !!m.qr_scan_pay
           }))
-          const cleaned = this.cleanupInvalidI18nKeysInMethods(this.channelList)
+          this.cleanupInvalidI18nKeysInMethods(this.channelList)
           this.originalChannelList = JSON.parse(JSON.stringify(this.channelList))
           this.originalCashierTemplateName = String(this.config.cashier_template_name || '').trim()
-          this.originalCollectPostalCode = !!this.config.collect_postal_code
           this.originalIsSimulator = !!this.config.is_simulator
-          if (cleaned) this.persistCurrentConfig()
           return
         }
 
@@ -754,13 +591,18 @@ export default {
           sort_order: index + 1,
           qr_scan_pay: this.paymentRegion === 'domestic' ? !!item.qr_scan_pay : false
         }))
+        if (Number.isInteger(this.prefill?.method_count)) {
+          this.channelList = this.channelList.slice(0, this.prefill.method_count)
+        }
         this.cleanupInvalidI18nKeysInMethods(this.channelList)
         this.originalChannelList = JSON.parse(JSON.stringify(this.channelList))
         this.originalCashierTemplateName = String(this.config.cashier_template_name || '').trim()
-        this.originalCollectPostalCode = !!this.config.collect_postal_code
         this.originalIsSimulator = !!this.config.is_simulator
       } catch (err) {
+        this.$message.error('读取支付方式失败，请关闭后重试')
         console.error(err)
+      } finally {
+        this.loadingChannels = false
       }
     },
     handleDragStart(index, event) {
@@ -792,7 +634,7 @@ export default {
     handleAddMethod() {
       if (this.readonly) return
       if (!this.isConfigReady) {
-        this.$message.warning('请先选择币种和国家/IP')
+        this.$message.warning('请先选择币种')
         return
       }
       this.showMethodSelector = true
@@ -804,7 +646,7 @@ export default {
     togglePaymentMethodEnabled(method, event) {
       if (this.readonly) return
       const on = !!event.target.checked
-      const idx = this.channelList.findIndex(m => m.id === method.id)
+      const idx = this.channelList.findIndex(m => m.channel_id === method.channel_id && m.pay_name === method.pay_name)
       if (idx > -1) {
         this.channelList.splice(idx, 1, { ...this.channelList[idx], enabled: on })
       }
@@ -834,46 +676,43 @@ export default {
       })
     },
     async handleSave() {
+      if (this.readonly || this.saving || this.loadingChannels) return
+      if (!this.isConfigReady) {
+        this.$message.warning('请选择币种')
+        return
+      }
       if (!this.isCashierTemplateNameValid) {
         this.$message.warning(
           '请填写符合规范的收银台模版名称：2～64 个字符，仅可使用英文字母、数字、下划线 _、连字符 -，且不能为空。'
         )
         return
       }
-      // 创建模式下：同一范围内不允许出现相同国家/IP + 币种的模版
-      if (this.mode === 'modal') {
-        const duplicatedTemplateId = await this.findDuplicateCountryCurrencyTemplateId()
-        if (duplicatedTemplateId) {
-          this.$message.warning(`当前国家/IP与币种组合已存在模版（${duplicatedTemplateId}），请勿重复创建`)
+      if (this.paymentRegion === 'domestic') {
+        try {
+          await this.$confirm.confirmStatusChange()
+        } catch {
           return
         }
       }
 
-      try {
-        await this.$confirm.confirmStatusChange()
-      } catch {
-        return
-      }
-
       this.saving = true
       try {
-        this.config.publish_status = 'published'
         const saveData = {
+          template_id: this.config.template_id,
+          legacy_row_key: this.config.legacy_row_key,
+          create: this.mode === 'modal',
           app_id: this.config.app_id,
           country_code: this.config.country_code,
           currency: this.config.currency_code,
           payment_env: this.config.payment_env,
           is_web_cashier: this.config.is_web_cashier,
           region: this.paymentRegion,
-          publish_status: this.config.publish_status,
+          publish_status: this.mode === 'modal' || this.paymentRegion === 'domestic' ? 'published' : this.config.publish_status,
+          cashier_template_name: String(this.config.cashier_template_name || '').trim(),
+          is_simulator: !!this.config.is_simulator,
           payment_methods: this.channelList.map((item, index) => ({
-            id: item.id,
-            payment_method_id: item.payment_method_id,
-            channel_id: item.channel_id,
-            payment_channel_id: item.payment_channel_id,
-            payment_channel_name: item.payment_channel_name,
-            country_code: item.country_code,
-            currency: item.currency,
+            ...item,
+            currency: this.config.currency_code,
             sort_order: index + 1,
             enabled: item.enabled !== false,
             is_recommended: !!item.is_recommended,
@@ -881,22 +720,16 @@ export default {
             qr_scan_pay: this.paymentRegion === 'domestic' ? !!item.qr_scan_pay : false
           }))
         }
-        await paymentAPI.setCashierTemplateOnline(saveData)
-        await paymentAPI.saveCashierTemplateDisplayName({
-          app_id: this.config.app_id,
-          country_code: this.config.country_code,
-          currency: this.config.currency_code,
-          payment_env: this.config.payment_env,
-          is_web_cashier: this.config.is_web_cashier,
-          cashier_template_name: String(this.config.cashier_template_name || '').trim()
-        })
-        this.persistCurrentConfig()
-        this.$message.success(this.mode === 'modal' ? '发布成功' : '保存成功')
+        const res = await paymentAPI.saveCashierTemplate(saveData)
+        if (res.code !== 200) throw new Error(res.message || '保存失败')
+        this.config.template_id = res.data.template_id || ''
+        this.config.publish_status = res.data.publish_status
+        this.$message.success('保存成功')
         this.originalChannelList = JSON.parse(JSON.stringify(this.channelList))
         this.originalPublishStatus = this.config.publish_status
         this.originalCashierTemplateName = String(this.config.cashier_template_name || '').trim()
-        this.originalCollectPostalCode = !!this.config.collect_postal_code
         this.originalIsSimulator = !!this.config.is_simulator
+        this.originalConfig = JSON.parse(JSON.stringify(this.config))
         if (this.mode === 'drawer' || this.mode === 'modal') {
           this.$emit('saved')
           if (this.mode === 'drawer') this.$emit('cancel')
@@ -909,10 +742,11 @@ export default {
       }
     },
     handleReset() {
+      if (this.readonly || this.saving) return
+      if (this.originalConfig) this.config = JSON.parse(JSON.stringify(this.originalConfig))
       this.channelList = JSON.parse(JSON.stringify(this.originalChannelList))
       this.config.publish_status = this.originalPublishStatus
       this.config.cashier_template_name = String(this.originalCashierTemplateName || '').trim()
-      this.config.collect_postal_code = !!this.originalCollectPostalCode
       this.config.is_simulator = !!this.originalIsSimulator
     },
     hasValidI18nKey(key) {
@@ -954,38 +788,12 @@ export default {
       }
       return typeMap[type] || type
     },
-    async findDuplicateCountryCurrencyTemplateId() {
-      try {
-        const scenario = this.prefill?.scenario || 'global'
-        const res = await paymentAPI.getPaymentSortList({
-          page: 1,
-          page_size: 1000,
-          region: this.paymentRegion,
-          scenario
-        })
-        if (res.code !== 200) return ''
-        const list = res.data?.list || []
-        const game = cashierGameNameFromAppId(this.config.app_id)
-        const duplicated = list.find(
-          item =>
-            cashierGameNameFromAppId(item.app_id) === game &&
-            item.country_code === this.config.country_code &&
-            item.currency === this.config.currency_code &&
-            (item.payment_env || '') === (this.config.payment_env || '') &&
-            !!item.is_web_cashier === !!this.config.is_web_cashier
-        )
-        if (!duplicated) return ''
-        return getCashierPublicTemplateId(duplicated)
-      } catch (err) {
-        console.error(err)
-        return ''
-      }
-    }
   }
 }
 </script>
 
 <style scoped>
+.add-method-button { margin-top: 12px; }
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -1084,23 +892,6 @@ export default {
 
 .config-fields-list .form-group--template-name .input--invalid:not(:disabled) {
   border-color: #cf1322;
-}
-
-.config-fields-list .form-group--collect-postal {
-  flex: 1 1 100%;
-  min-width: 220px;
-}
-
-.collect-postal-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-}
-
-.collect-postal-switch {
-  flex-shrink: 0;
 }
 
 .config-fields-list .form-group--simulator {
@@ -1484,5 +1275,41 @@ export default {
     align-items: flex-start;
   }
 }
-</style>
 
+.cashier-config--embedded { max-width: none; }
+.cashier-config--embedded .page-content { gap: 0; }
+.cashier-config--embedded .card { padding: 0; border: 0; box-shadow: none; border-radius: 0; }
+.cashier-config--embedded .card + .card { border-top: 1px solid #f0f0f0; padding-top: 12px; margin-top: 12px; }
+.cashier-config--embedded .card-header { padding: 0; border: 0; margin-bottom: 12px; }
+.cashier-config--embedded .card-title { font-size: 14px; font-weight: 600; }
+.cashier-config--embedded .config-fields-list { flex-direction: column; gap: 24px; }
+.cashier-config--embedded .config-fields-list .form-group { flex: none; min-width: 0; }
+.cashier-config--embedded .form-label { display: block; margin-bottom: 8px; }
+.cashier-config--embedded .required { color: #ff4d4f; }
+.cashier-config--embedded .config-fields-list .input { max-width: none; }
+.cashier-config--embedded .name-spec-block { margin-top: 6px; }
+.cashier-config--embedded .name-spec-block .form-hint { margin: 0; font-size: 12px; color: #888; }
+.cashier-config--embedded .hint-code { border: 0; padding: 0; background: transparent; font-weight: 400; }
+.cashier-config--embedded .card-header-content { position: relative; flex-wrap: wrap; gap: 8px; }
+.cashier-config--embedded .card-header-content > div { flex: 1; }
+.cashier-config--embedded .card-desc { background: #f7f8fa; padding: 8px 12px; border-radius: 2px; font-size: 12px; line-height: 20px; margin-top: 12px; }
+.cashier-config--embedded .card-header-content > .btn { align-self: flex-start; }
+.cashier-config--embedded .config-info { gap: 16px; margin-bottom: 12px; }
+.cashier-config--embedded .info-tag { padding: 0; border: 0; background: transparent; border-radius: 0; font-size: 12px; }
+.cashier-config--embedded .config-waiting-hint { display: flex; align-items: center; justify-content: center; min-height: 86px; padding: 20px; margin: 0; background: #fafafa; color: #999; font-size: 14px; text-align: center; }
+.cashier-config--embedded .sortable-list { gap: 8px; }
+.cashier-config--embedded .sortable-item { padding: 12px; border-radius: 4px; }
+.cashier-config--embedded .item-actions { flex-direction: row; gap: 12px; }
+.cashier-config--embedded .form-footer { position: sticky; bottom: -24px; z-index: 1; margin: 16px -24px -24px; padding: 16px 24px; border: 0; border-top: 1px solid #f0f0f0; border-radius: 0; gap: 8px; }
+.cashier-config--embedded .simulator-switch-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+.cashier-config--embedded .simulator-switch-head .form-label { margin-bottom: 4px; }
+.cashier-config--embedded .simulator-switch .switch-label { font-size: 12px; color: #666; }
+.cashier-config--embedded .switch { height: 22px; }
+.cashier-config--embedded .switch-slider::before { bottom: 2px; left: 2px; }
+.cashier-config--embedded .switch input:checked + .switch-slider::before { transform: translateX(22px); }
+@media (max-width: 640px) {
+  .cashier-config--embedded .card-header-content { flex-direction: column; }
+  .cashier-config--embedded .card-header-content > .btn { width: auto; }
+  .cashier-config--embedded .form-footer { bottom: -16px; margin: 16px -16px -16px; padding: 16px; }
+}
+</style>

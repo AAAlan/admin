@@ -6,6 +6,10 @@ import {
   attachPublicTemplateIds,
   getCashierPublicTemplateId
 } from '../utils/cashierPublicTemplateId.js'
+import {
+  CASHIER_TEMPLATE_STORAGE_KEY, cashierTemplateStorageKey,
+  readCashierTemplateStore, mergeSavedCashierTemplates
+} from '../utils/cashierTemplateStore.js'
 
 // 游戏列表Mock数据（单游戏 Silver：Game id / 游戏名均为 Silver，应用以 app_id 区分）
 export const mockGames = [
@@ -732,7 +736,7 @@ function mergeCashierTemplateDisplayNames(list) {
   const map = readPaymentSortDisplayNames()
   return list.map((item) => {
     const rk = paymentSortRowKey(item)
-    const custom = String(map[rk] || '').trim()
+    const custom = String(item.cashier_template_name || map[rk] || '').trim()
     const fallback = getCashierPublicTemplateId(item)
     return {
       ...item,
@@ -988,7 +992,18 @@ export const mockPaymentMethodsList = [
     channel_id: 'wechat_wx1234567890abcdef',
     icon_url: 'https://cdn.example.com/payment-icons/wechat.png',
     status: 'enabled'
-  }
+  },
+  // Adyen subchannels observed in the reference template selector.
+  ...['doku_wallet', 'paynow', 'paysafecard', 'googlepay'].map((pay_name, index) => ({
+    id: 13 + index,
+    sdk_app_id: 'Silver',
+    pay_name,
+    selectedCardBrand: '',
+    channel_ids: ['adyen_MerchantAccount_Test123'],
+    channel_id: 'adyen_MerchantAccount_Test123',
+    qr_scan_pay: false,
+    status: 'enabled'
+  }))
 ]
 
 /** 支付方式 -> 支付渠道映射 Mock（用于手动支付渠道路由） */
@@ -1343,54 +1358,9 @@ export const mockPaymentInfoConfigListRows = [
   }
 ]
 
-function mergeSortListCollectPostalFromPaymentInfo(list) {
-  if (!Array.isArray(list)) return list
-  return list.map((item) => {
-    const match = mockPaymentInfoConfigListRows.find(
-      (r) =>
-        r.app_id === item.app_id &&
-        r.country_code === item.country_code &&
-        r.currency === item.currency &&
-        String(r.payment_env || '') === String(item.payment_env || '') &&
-        !!r.is_web_cashier === !!item.is_web_cashier
-    )
-    return {
-      ...item,
-      collect_postal_code: match ? !!match.collect_postal_code : false
-    }
-  })
-}
-
-function mergeSortListCollectPostalFromPersistedStore(list, params = {}) {
-  if (!Array.isArray(list)) return list
-  const region = isDomesticRegion(params) ? 'domestic' : 'overseas'
-  try {
-    const raw = localStorage.getItem(PAYMENT_SORT_CONFIG_STORAGE_KEY)
-    const store = raw ? JSON.parse(raw) : {}
-    if (!store || typeof store !== 'object') return list
-    return list.map((item) => {
-      const key = [
-        region,
-        item.app_id || '',
-        item.country_code || '',
-        item.currency || '',
-        item.payment_env || '',
-        item.is_web_cashier ? 'web' : 'nonweb'
-      ].join('|')
-      const persisted = store[key]
-      if (persisted && persisted.collect_postal_code !== undefined) {
-        return { ...item, collect_postal_code: !!persisted.collect_postal_code }
-      }
-      return item
-    })
-  } catch {
-    return list
-  }
-}
-
 function mergeSortListSimulatorFromPersistedStore(list, params = {}) {
   if (!isDomesticRegion(params)) {
-    return list.map((item) => ({ ...item, is_simulator: false }))
+    return list.map((item) => ({ ...item, is_simulator: !!item.is_simulator }))
   }
   try {
     const raw = localStorage.getItem(PAYMENT_SORT_CONFIG_STORAGE_KEY)
@@ -2222,6 +2192,7 @@ export const mockAPI = {
         mockPaymentSortListDomestic.map(row => ({ ...row })),
         domesticPublicTemplateIdMap
       )
+      list = mergeSavedCashierTemplates(list, 'domestic')
       if (params.country_code) {
         list = list.filter(item => item.country_code === params.country_code)
       }
@@ -2239,7 +2210,6 @@ export const mockAPI = {
       // 国内全局收银台模版固定保留 Web / 原生两条基线，不受历史删除缓存影响
       list = applyPaymentSortOfflineOverrides(list)
       list = mergeCashierTemplateDisplayNames(list)
-      list = list.map((item) => ({ ...item, collect_postal_code: false }))
       list = mergeSortListSimulatorFromPersistedStore(list, params)
       const page = params.page || 1
       const pageSize = params.page_size || 10
@@ -2256,6 +2226,7 @@ export const mockAPI = {
     }
 
     let result = attachPublicTemplateIds([...mockPaymentSortListOverseas], overseasPublicTemplateIdMap)
+    result = mergeSavedCashierTemplates(result, 'overseas')
 
     // 筛选
     if (params.app_id) {
@@ -2281,8 +2252,6 @@ export const mockAPI = {
     result = applyPaymentSortDeletedFilter(result)
     result = applyPaymentSortOfflineOverrides(result)
     result = mergeCashierTemplateDisplayNames(result)
-    result = mergeSortListCollectPostalFromPaymentInfo(result)
-    result = mergeSortListCollectPostalFromPersistedStore(result, params)
     result = mergeSortListSimulatorFromPersistedStore(result, params)
 
     // 分页
@@ -2303,10 +2272,35 @@ export const mockAPI = {
     }
   },
 
+  async saveCashierTemplate(payload = {}) {
+    await delay()
+    const region = payload.region || 'overseas'
+    const { create, ...fields } = payload
+    const record = {
+      ...fields,
+      region,
+      ...(create ? { template_id: `cashier_${crypto.randomUUID()}` } : {}),
+      payment_methods: (payload.payment_methods || []).map((method, index) => ({
+        ...method, sort_order: index + 1
+      }))
+    }
+    const store = readCashierTemplateStore()
+    store[cashierTemplateStorageKey(record, region)] = record
+    // A failed storage write must propagate so the UI cannot report false success.
+    localStorage.setItem(CASHIER_TEMPLATE_STORAGE_KEY, JSON.stringify(store))
+    const offline = readPaymentSortOfflineKeys()
+    if (record.publish_status === 'published') offline.delete(paymentSortRowKey(record))
+    else if (record.publish_status === 'offline') offline.add(paymentSortRowKey(record))
+    writePaymentSortOfflineKeys(offline)
+    return { code: 200, message: 'success', data: record }
+  },
+
   /** 收银台模版下线（Mock：写入 localStorage，列表刷新后仍为已下线） */
   async setCashierTemplateOffline(payload) {
     await delay()
     const key = paymentSortRowKey({
+      template_id: payload.template_id,
+      legacy_row_key: payload.legacy_row_key,
       app_id: payload.app_id,
       country_code: payload.country_code,
       currency: payload.currency,
@@ -2335,6 +2329,8 @@ export const mockAPI = {
   async setCashierTemplateOnline(payload) {
     await delay()
     const key = paymentSortRowKey({
+      template_id: payload.template_id,
+      legacy_row_key: payload.legacy_row_key,
       app_id: payload.app_id,
       country_code: payload.country_code,
       currency: payload.currency,
@@ -2355,6 +2351,8 @@ export const mockAPI = {
   async saveCashierTemplateDisplayName(payload = {}) {
     await delay()
     const rowKey = paymentSortRowKey({
+      template_id: payload.template_id,
+      legacy_row_key: payload.legacy_row_key,
       app_id: payload.app_id,
       country_code: payload.country_code,
       currency: payload.currency,
@@ -2380,6 +2378,8 @@ export const mockAPI = {
   async setCashierTemplateDefault(payload = {}) {
     await delay()
     const key = paymentSortRowKey({
+      template_id: payload.template_id,
+      legacy_row_key: payload.legacy_row_key,
       app_id: payload.app_id,
       country_code: payload.country_code,
       currency: payload.currency,
@@ -2404,6 +2404,8 @@ export const mockAPI = {
   async deleteCashierTemplate(payload = {}) {
     await delay()
     const rowKey = paymentSortRowKey({
+      template_id: payload.template_id,
+      legacy_row_key: payload.legacy_row_key,
       app_id: payload.app_id,
       country_code: payload.country_code,
       currency: payload.currency,
@@ -2442,14 +2444,7 @@ export const mockAPI = {
     try {
       const raw = localStorage.getItem(PAYMENT_SORT_CONFIG_STORAGE_KEY)
       const mapObj = raw ? JSON.parse(raw) : {}
-      const storageKey = [
-        scope.region,
-        payload.app_id || '',
-        payload.country_code || '',
-        payload.currency || '',
-        payload.payment_env || '',
-        payload.is_web_cashier ? 'web' : 'nonweb'
-      ].join('|')
+      const storageKey = cashierTemplateStorageKey(payload, scope.region)
       if (mapObj && typeof mapObj === 'object' && mapObj[storageKey]) {
         delete mapObj[storageKey]
         localStorage.setItem(PAYMENT_SORT_CONFIG_STORAGE_KEY, JSON.stringify(mapObj))

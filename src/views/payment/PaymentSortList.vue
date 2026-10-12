@@ -1,5 +1,5 @@
 <template>
-  <div :class="embedded ? '' : 'page-container'">
+  <div class="cashier-template-list" :class="embedded ? '' : 'page-container'">
     <div v-if="!embedded" class="page-header">
       <div class="header-left">
         <h1 class="page-title">{{ pageTitle }}</h1>
@@ -24,42 +24,16 @@
     <div class="page-filters">
       <div class="filter-row">
         <div class="filter-item">
-          <label for="filter-country" class="form-label">国家/IP</label>
-          <select
-            id="filter-country"
-            v-model="filters.country_code"
-            class="select"
-            aria-label="国家/IP"
-          >
-            <option value="">全部国家/IP</option>
-            <option value="US">US - 美国</option>
-            <option value="CN">CN - 中国</option>
-            <option value="JP">JP - 日本</option>
-            <option value="KR">KR - 韩国</option>
-            <option value="GB">GB - 英国</option>
-            <option value="DE">DE - 德国</option>
-            <option value="FR">FR - 法国</option>
-            <option value="CA">CA - 加拿大</option>
-            <option value="AU">AU - 澳大利亚</option>
-          </select>
-        </div>
-        <div class="filter-item">
-          <label for="filter-currency" class="form-label">币种</label>
+          <label for="filter-currency" class="form-label">币种：</label>
           <select
             id="filter-currency"
             v-model="filters.currency"
             class="select"
+            :class="{ 'select--empty': !filters.currency }"
             aria-label="币种"
           >
             <option value="">全部币种</option>
-            <option value="USD">USD - 美元</option>
-            <option value="CNY">CNY - 人民币</option>
-            <option value="EUR">EUR - 欧元</option>
-            <option value="GBP">GBP - 英镑</option>
-            <option value="JPY">JPY - 日元</option>
-            <option value="KRW">KRW - 韩元</option>
-            <option value="CAD">CAD - 加元</option>
-            <option value="AUD">AUD - 澳元</option>
+            <option v-for="currency in currencies" :key="currency.code" :value="currency.code">{{ currency.code }} - {{ currency.name }}</option>
           </select>
         </div>
         <div v-if="resolvedRegion === 'domestic'" class="filter-item">
@@ -74,6 +48,10 @@
             <option value="native">原生收银台</option>
             <option value="web">Web 收银台</option>
           </select>
+        </div>
+        <div class="filter-actions">
+          <button type="button" class="btn btn-primary" aria-label="查询" @click="handleSearch">查询</button>
+          <button type="button" class="btn btn-secondary" aria-label="重置筛选" @click="handleReset">重置</button>
         </div>
       </div>
     </div>
@@ -92,14 +70,12 @@
       <table class="table" role="table" aria-label="支付方式排序列表">
         <thead>
           <tr role="row">
-            <th role="columnheader" scope="col">收银台模版名称</th>
-            <th role="columnheader" scope="col">国家/IP</th>
-            <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col">模版类型</th>
-            <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col">模拟器</th>
-            <th role="columnheader" scope="col">币种</th>
-            <th v-if="resolvedRegion !== 'domestic'" role="columnheader" scope="col">邮编收集</th>
-            <th role="columnheader" scope="col">支付方式数量</th>
-            <th role="columnheader" scope="col" class="th-pay-switch">
+            <th role="columnheader" scope="col">模版名称</th>
+            <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col" class="th-template-kind">模版类型</th>
+            <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col" class="th-simulator">模拟器</th>
+            <th role="columnheader" scope="col" class="th-currency">币种</th>
+            <th role="columnheader" scope="col" class="th-method-count">支付方式数量</th>
+            <th v-if="resolvedRegion === 'domestic'" role="columnheader" scope="col" class="th-pay-switch">
               <div class="pay-switch-th">
                 <span class="pay-switch-th-text">模版开关</span>
                 <div class="pay-switch-help-wrap">
@@ -129,7 +105,6 @@
             <td role="cell">
               <span class="template-display-name">{{ getCashierTemplateDisplayName(item) }}</span>
             </td>
-            <td role="cell">{{ item.country_code }}</td>
             <td v-if="resolvedRegion === 'domestic'" role="cell">
               {{ formatDomesticCashierKind(item) }}
             </td>
@@ -138,15 +113,11 @@
               <span v-else class="badge badge-secondary">否</span>
             </td>
             <td role="cell">{{ item.currency }}</td>
-            <td v-if="resolvedRegion !== 'domestic'" role="cell">
-              <span v-if="item.collect_postal_code" class="badge badge-success">开启</span>
-              <span v-else class="badge badge-secondary">关闭</span>
-            </td>
             <td role="cell">
               <span class="stat-number">{{ item.method_count }}</span>
               <span class="stat-unit">个</span>
             </td>
-            <td role="cell" class="td-pay-switch" @click.stop>
+            <td v-if="resolvedRegion === 'domestic'" role="cell" class="td-pay-switch" @click.stop>
               <label class="channel-switch">
                 <input
                   type="checkbox"
@@ -160,21 +131,20 @@
             </td>
             <td role="cell" class="table-cell-actions">
               <button
-                class="btn btn-primary btn-sm"
+                class="btn btn-text table-action-link"
                 @click="handleEditSort(item)"
                 aria-label="编辑收银台配置"
               >
-                <Icon name="edit" :size="14" />
                 <span>编辑</span>
               </button>
               <button
-                class="btn btn-text btn-sm"
+                class="btn btn-text table-action-link"
                 @click="handleViewSort(item)"
                 aria-label="查看收银台配置"
               >
-                <Icon name="eye" :size="14" />
                 <span>查看</span>
               </button>
+              <button v-if="resolvedRegion === 'overseas'" type="button" class="btn btn-text table-action-link delete-action" :disabled="!!deletingKeys[paymentSortRowKey(item)]" :aria-label="`删除 ${getCashierTemplateDisplayName(item)}`" @click="handleDeleteSort(item)">删除</button>
             </td>
           </tr>
         </tbody>
@@ -215,7 +185,8 @@
     <Modal
       v-model:visible="createModalVisible"
       title="创建收银台配置"
-      size="xlarge"
+      size="large"
+      variant="cashier"
       @close="onSortCreateModalClose"
     >
       <PaymentSort
@@ -225,6 +196,7 @@
         :prefill="createPayload"
         :region="resolvedRegion"
         @saved="handleCreateModalSaved"
+        @cancel="onSortCreateModalClose"
       />
     </Modal>
 
@@ -243,6 +215,7 @@
         :readonly="drawerReadonly"
         :region="resolvedRegion"
         @saved="handleDrawerSaved"
+        @cancel="onSortDrawerClose"
       />
     </Drawer>
   </div>
@@ -256,6 +229,7 @@ import Modal from '@/components/Modal.vue'
 import Drawer from '@/components/Drawer.vue'
 import PaymentSort from './PaymentSort.vue'
 import { getCashierPublicTemplateId, paymentSortRowKey } from '@/utils/cashierPublicTemplateId.js'
+import { cashierCurrencies } from '@/utils/cashierCurrencies.js'
 
 export default {
   name: 'PaymentSortList',
@@ -282,6 +256,8 @@ export default {
   data() {
     return {
       sortList: [],
+      currencies: cashierCurrencies,
+      deletingKeys: {},
       loading: false,
       error: null,
       createModalVisible: false,
@@ -290,7 +266,6 @@ export default {
       drawerPayload: null,
       drawerReadonly: false,
       filters: {
-        country_code: '',
         currency: '',
         payment_env: '',
         /** domestic: '' | 'native' | 'web' */
@@ -323,6 +298,7 @@ export default {
       if (!this.drawerVisible) return 'closed'
       const p = this.drawerPayload || {}
       return [
+        p.template_id,
         p.app_id,
         p.country_code,
         p.currency,
@@ -332,6 +308,12 @@ export default {
     }
   },
   watch: {
+    resolvedRegion(next, prev) {
+      if (next === prev) return
+      this.onSortCreateModalClose()
+      this.onSortDrawerClose()
+      this.handleReset()
+    },
     scenario: {
       immediate: false,
       handler() {
@@ -370,9 +352,16 @@ export default {
       this.createModalVisible = false
       this.createPayload = null
     },
-    handleCreateModalSaved() {
+    async handleCreateModalSaved() {
       this.onSortCreateModalClose()
-      this.fetchList()
+      this.filters.currency = ''
+      this.filters.domestic_cashier_kind = ''
+      this.currentPage = 1
+      await this.fetchList()
+      if (this.totalPages > 1) {
+        this.currentPage = this.totalPages
+        await this.fetchList()
+      }
     },
     async fetchList() {
       this.loading = true
@@ -419,6 +408,9 @@ export default {
     },
     handleEditSort(item) {
       this.drawerPayload = {
+        template_id: item.template_id,
+        legacy_row_key: item.template_id ? '' : paymentSortRowKey(item),
+        method_count: item.method_count,
         app_id: item.app_id,
         country_code: item.country_code,
         currency: item.currency,
@@ -429,7 +421,6 @@ export default {
           const c = String(item.cashier_template_name_custom || '').trim()
           return c || this.getCashierTemplateId(item)
         })(),
-        collect_postal_code: !!item.collect_postal_code,
         is_simulator: !!item.is_simulator
       }
       this.drawerReadonly = false
@@ -442,6 +433,9 @@ export default {
     },
     handleViewSort(item) {
       this.drawerPayload = {
+        template_id: item.template_id,
+        legacy_row_key: item.template_id ? '' : paymentSortRowKey(item),
+        method_count: item.method_count,
         app_id: item.app_id,
         country_code: item.country_code,
         currency: item.currency,
@@ -452,7 +446,6 @@ export default {
           const c = String(item.cashier_template_name_custom || '').trim()
           return c || this.getCashierTemplateId(item)
         })(),
-        collect_postal_code: !!item.collect_postal_code,
         is_simulator: !!item.is_simulator
       }
       this.drawerReadonly = true
@@ -460,6 +453,33 @@ export default {
     },
     sortRowToggleKey(item) {
       return this.getCashierTemplateId(item)
+    },
+    async handleDeleteSort(item) {
+      const key = paymentSortRowKey(item)
+      if (this.deletingKeys[key]) return
+      try {
+        await this.$confirm.confirm({
+          title: '删除收银台模版',
+          message: `确定删除模版「${this.getCashierTemplateDisplayName(item)}」吗？`,
+          type: 'warning',
+          confirmText: '删除'
+        })
+      } catch {
+        return
+      }
+      this.deletingKeys = { ...this.deletingKeys, [key]: true }
+      try {
+        const res = await paymentAPI.deleteCashierTemplate({ ...item, region: this.resolvedRegion, scenario: this.scenario || 'global' })
+        if (res.code !== 200) throw new Error(res.message || '删除失败')
+        this.currentPage = Math.min(this.currentPage, Math.max(1, Math.ceil((this.total - 1) / this.pageSize)))
+        await this.fetchList()
+        this.$message.success('删除成功')
+      } catch (err) {
+        this.$message.error(err.message || '删除失败')
+      } finally {
+        const { [key]: _, ...rest } = this.deletingKeys
+        this.deletingKeys = rest
+      }
     },
     isCashierTemplatePublished(item) {
       return this.normalizePublishStatus(item) === 'published'
@@ -489,6 +509,7 @@ export default {
       this.sortStatusToggling = { ...this.sortStatusToggling, [key]: true }
       try {
         const payload = {
+          template_id: item.template_id,
           app_id: item.app_id,
           country_code: item.country_code,
           currency: item.currency,
@@ -528,7 +549,6 @@ export default {
     },
     handleReset() {
       this.filters = {
-        country_code: '',
         currency: '',
         payment_env: '',
         domestic_cashier_kind: ''
@@ -545,6 +565,7 @@ export default {
 </script>
 
 <style scoped>
+.delete-action { color: #ff4d4f; }
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -810,5 +831,39 @@ export default {
   word-break: break-all;
 }
 
+
+.cashier-template-list .page-header { margin-bottom: 16px; min-height: 32px; }
+.cashier-template-list .page-title { font-size: 18px; line-height: 32px; }
+.cashier-template-list .page-filters { margin-bottom: 16px; }
+.cashier-template-list .filter-row { align-items: center; gap: 16px; }
+.cashier-template-list .filter-item { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cashier-template-list .filter-item .form-label { white-space: nowrap; }
+.cashier-template-list .filter-item .select { width: 200px; }
+.filter-actions { display: flex; gap: 8px; }
+.cashier-template-list .page-content { gap: 0; overflow-x: auto; }
+.cashier-template-list .table { min-width: 900px; border-collapse: separate; border-spacing: 0; }
+.cashier-template-list .table th { height: 54px; background: #fafafa; padding: 16px; white-space: nowrap; }
+.cashier-template-list .table th:first-child { border-top-left-radius: 8px; min-width: 280px; }
+.cashier-template-list .table th:last-child { border-top-right-radius: 8px; width: 180px; }
+.cashier-template-list .table .th-currency { width: 120px; min-width: 120px; }
+.cashier-template-list .table .th-method-count { width: 140px; min-width: 140px; }
+.cashier-template-list .table .th-template-kind { width: 140px; min-width: 140px; }
+.cashier-template-list .table .th-simulator { width: 90px; min-width: 90px; }
+.cashier-template-list .table td { height: 57px; padding: 16px; color: #262626; }
+.cashier-template-list .table td.table-cell-actions { display: table-cell; white-space: nowrap; }
+.cashier-template-list .table td.table-cell-actions .btn + .btn { margin-left: 16px; }
+.cashier-template-list .table-action-link { padding: 0; height: auto; color: #1677ff; }
+.cashier-template-list .table-action-link.delete-action { color: #ff4d4f; }
+.cashier-template-list .template-display-name, .cashier-template-list .stat-number { font-weight: 400; }
+.cashier-template-list .stat-unit { color: #262626; }
+.cashier-template-list .pagination { margin-top: 16px; padding-top: 0; border-top: none; }
+.cashier-template-list .pay-switch-th-text { font-weight: 600; }
+@media (max-width: 640px) {
+  .cashier-template-list .filter-row { align-items: flex-start; gap: 12px; }
+  .cashier-template-list .filter-item { flex: 1 1 100%; }
+  .cashier-template-list .filter-item .select { width: auto; flex: 1; min-width: 0; }
+  .cashier-template-list .page-header { align-items: flex-start; gap: 12px; }
+  .cashier-template-list .pagination { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
 </style>
 

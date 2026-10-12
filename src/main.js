@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import './styles/index.css'
 import './styles/components.css'
+import './styles/reference-theme.css'
 
 // 全局工具函数
 import message from './utils/message'

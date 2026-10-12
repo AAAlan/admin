@@ -22,7 +22,7 @@
             v-model.trim="listFilter"
             type="search"
             class="filter-input"
-            placeholder="筛选 ID / 国家 / 币种"
+            placeholder="筛选 ID / 币种"
             aria-label="筛选模版列表"
           />
           <router-link class="btn btn-ghost btn-sm" :to="publicSortPath">
@@ -132,7 +132,7 @@
               <span class="template-row__body">
                 <span class="template-row__id">{{ row.o.rowKey }}</span>
                 <span class="template-row__meta">
-                  <span class="pill">{{ row.o.country }}/{{ row.o.currency }}</span>
+                  <span class="pill">{{ row.o.currency }}</span>
                   <span class="pill pill--muted">{{ row.o.methodCount }} 种支付</span>
                 </span>
               </span>
@@ -273,7 +273,7 @@ export default {
       const q = (this.listFilter || '').toLowerCase()
       if (!q) return this.options
       return this.options.filter(o => {
-        const hay = `${o.rowKey} ${o.country} ${o.currency} ${o.paymentEnv} ${o.internalKey || ''}`.toLowerCase()
+        const hay = `${o.rowKey} ${o.currency} ${o.paymentEnv} ${o.internalKey || ''}`.toLowerCase()
         return hay.includes(q)
       })
     },
@@ -286,7 +286,7 @@ export default {
         for (const o of this.options) {
           if (!selected.has(o.id)) continue
           if (q) {
-            const hay = `${o.rowKey} ${o.country} ${o.currency} ${o.paymentEnv} ${o.internalKey || ''}`.toLowerCase()
+            const hay = `${o.rowKey} ${o.currency} ${o.paymentEnv} ${o.internalKey || ''}`.toLowerCase()
             if (!hay.includes(q)) continue
           }
           rows.push({ kind: 'opt', o })
@@ -478,7 +478,6 @@ export default {
             rowKey: id,
             internalKey: paymentSortRowKey(row),
             isPublished: pub,
-            country: row.country_code || '—',
             currency: row.currency || '—',
             paymentEnv: row.payment_env || '—',
             methodCount: row.method_count || 0

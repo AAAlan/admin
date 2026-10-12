@@ -2,7 +2,8 @@
   <Modal
     :visible="visible"
     title="添加支付方式"
-    size="large"
+    size="medium"
+    variant="cashier"
     :disable-teleport="contained"
     :contained="contained"
     @update:visible="handleUpdateVisible"
@@ -11,8 +12,9 @@
     <div class="selector-content">
       <!-- Step 1: 选择支付渠道 -->
       <div class="step-section">
-        <label class="form-label step-label">1. 选择支付渠道</label>
+        <label for="cashier-payment-channel" class="form-label step-label">1. 选择支付渠道</label>
         <select
+          id="cashier-payment-channel"
           v-model="selectedChannelId"
           class="select"
           @change="handleChannelChange"
@@ -30,30 +32,30 @@
 
       <!-- Step 2: 选择子渠道 -->
       <div v-if="selectedChannelId" class="step-section">
-        <label class="form-label step-label">2. 选择子渠道（subchannel）</label>
+        <label class="form-label step-label">2. 选择子渠道(subChannel)</label>
         <div v-if="uniqueSubchannels.length === 0" class="empty-state-sm">
           该渠道下暂无子渠道
         </div>
         <div v-else class="methods-list">
-          <div
+          <label
             v-for="sub in uniqueSubchannels"
             :key="sub.pay_name"
             class="method-item"
-            :class="{ 'method-selected': isSubchannelSelected(sub.pay_name) }"
-            @click="handleToggleSubchannel(sub)"
+            :class="{ 'method-selected': isSubchannelSelected(sub.pay_name), 'method-unavailable': isSubchannelAdded(sub.pay_name) }"
           >
+            <input type="checkbox" :checked="isSubchannelSelected(sub.pay_name)" :disabled="isSubchannelAdded(sub.pay_name)" @change="handleToggleSubchannel(sub)" />
             <div class="method-info">
-              <div class="method-name">{{ sub.pay_name }}</div>
+              <div class="method-name">{{ sub.pay_name }} <span class="scan-label">{{ sub.qr_scan_pay ? '扫码' : '非扫码' }}</span><span v-if="isSubchannelAdded(sub.pay_name)" class="scan-label">已添加</span></div>
             </div>
             <div class="method-check">
               <Icon v-if="isSubchannelSelected(sub.pay_name)" name="check" :size="20" />
             </div>
-          </div>
+          </label>
         </div>
       </div>
 
       <!-- Step 3: 选择卡品牌（仅当选中的子渠道有卡品牌时） -->
-      <div v-if="selectedSubchannelBrands.length > 0" class="step-section">
+      <div v-if="region === 'domestic' && selectedSubchannelBrands.length > 0" class="step-section">
         <label class="form-label step-label">3. 选择卡品牌（selectedCardBrand）</label>
         <div class="brand-list">
           <label
@@ -82,8 +84,7 @@
       <button class="btn btn-secondary" @click="handleClose" aria-label="取消">
         取消
       </button>
-      <button class="btn btn-primary" @click="handleConfirm" aria-label="确认">
-        <Icon name="check" :size="16" />
+      <button class="btn btn-primary" :disabled="selectedMethods.length === 0" @click="handleConfirm" aria-label="确认添加">
         <span>确认添加 ({{ selectedMethods.length }})</span>
       </button>
     </template>
@@ -163,6 +164,7 @@ export default {
         } else {
           seen.set(m.pay_name, {
             pay_name: m.pay_name,
+            qr_scan_pay: !!m.qr_scan_pay,
             brands: m.selectedCardBrand ? [m.selectedCardBrand] : []
           })
         }
@@ -172,6 +174,7 @@ export default {
     selectedSubchannelBrands() {
       const allBrands = []
       for (const name of this.selectedSubchannelNames) {
+        if (this.isSubchannelAdded(name)) continue
         const sub = this.uniqueSubchannels.find(s => s.pay_name === name)
         if (sub && sub.brands.length > 0) {
           sub.brands.forEach(b => { if (!allBrands.includes(b)) allBrands.push(b) })
@@ -182,19 +185,15 @@ export default {
     selectedMethods() {
       const result = []
       for (const name of this.selectedSubchannelNames) {
+        if (this.isSubchannelAdded(name)) continue
         const sub = this.uniqueSubchannels.find(s => s.pay_name === name)
         if (!sub) continue
-        if (sub.brands.length === 0) {
+        if (sub.brands.length === 0 || this.region === 'overseas') {
           const m = this.rawSubchannelsForChannel.find(x => x.pay_name === name)
           if (m) result.push(m)
         } else {
-          for (const brand of this.selectedBrands) {
-            if (!sub.brands.includes(brand)) continue
-            const m = this.rawSubchannelsForChannel.find(
-              x => x.pay_name === name && x.selectedCardBrand === brand
-            )
-            if (m) result.push(m)
-          }
+          const m = this.rawSubchannelsForChannel.find(x => x.pay_name === name && this.selectedBrands.includes(x.selectedCardBrand))
+          if (m) result.push(m)
         }
       }
       return result
@@ -219,7 +218,6 @@ export default {
           paymentAPI.getPaymentMethods({ region: regionParam, include_all: true })
         ])
         this.channelOptions = channelRes.code === 200 ? (channelRes.data.list || []) : []
-        const channelMap = new Map(this.channelOptions.map(c => [c.channel_id, c]))
         const rawMethods = methodRes.code === 200 ? (methodRes.data.list || []) : []
         this.allMethods = rawMethods.map(m => {
           const mappedIds = Array.isArray(m.channel_ids) && m.channel_ids.length > 0
@@ -231,6 +229,7 @@ export default {
             payment_method_id: m.payment_method_id || `pm_${m.id}`,
             pay_name: m.pay_name,
             selectedCardBrand: m.selectedCardBrand || '',
+            qr_scan_pay: !!m.qr_scan_pay,
             channel_id: m.channel_id,
             channel_ids: candidateIds,
             icon_url: m.icon_url || ''
@@ -249,7 +248,11 @@ export default {
     isSubchannelSelected(payName) {
       return this.selectedSubchannelNames.includes(payName)
     },
+    isSubchannelAdded(payName) {
+      return this.excludeIds.includes(`${this.selectedChannelId}::${payName}`)
+    },
     handleToggleSubchannel(sub) {
+      if (this.isSubchannelAdded(sub.pay_name)) return
       const idx = this.selectedSubchannelNames.indexOf(sub.pay_name)
       if (idx > -1) {
         this.selectedSubchannelNames.splice(idx, 1)
@@ -276,7 +279,7 @@ export default {
         this.$message.warning('请至少选择一个子渠道')
         return
       }
-      if (this.selectedSubchannelBrands.length > 0 && this.selectedBrands.length === 0) {
+      if (this.region === 'domestic' && this.selectedSubchannelBrands.length > 0 && this.selectedBrands.length === 0) {
         this.$message.warning('请选择卡品牌')
         return
       }
@@ -284,6 +287,7 @@ export default {
       const channelName = ch?.pay_name || ch?.channel_name || this.selectedChannelId
       const result = []
       for (const name of this.selectedSubchannelNames) {
+        if (this.isSubchannelAdded(name)) continue
         const sub = this.uniqueSubchannels.find(s => s.pay_name === name)
         if (!sub) continue
         const base = this.rawSubchannelsForChannel.find(x => x.pay_name === name)
@@ -301,7 +305,7 @@ export default {
             channel_id: this.selectedChannelId,
             channel_name: channelName,
             selectedCardBrand: '',
-            selectedCardBrands: [...this.selectedBrands].filter(b => sub.brands.includes(b))
+            selectedCardBrands: this.region === 'overseas' ? [...sub.brands] : [...this.selectedBrands].filter(b => sub.brands.includes(b))
           })
         }
       }
@@ -327,6 +331,9 @@ export default {
 </script>
 
 <style scoped>
+.scan-label { margin-left: 8px; font-size: 12px; color: #999; font-weight: 400; }
+.method-unavailable { opacity: .55; cursor: not-allowed; }
+.method-item input { accent-color: #1677ff; margin-right: 10px; }
 .selector-content {
   display: flex;
   flex-direction: column;

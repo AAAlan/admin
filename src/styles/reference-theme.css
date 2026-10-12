@@ -1,0 +1,28 @@
+/* 收银台后台：与提供的乐云控截图保持一致的公共界面规范。 */
+:root {
+  --color-bg-layout: #f5f5f5;
+  --color-text-primary: #262626;
+  --color-text-secondary: #595959;
+  --radius: 6px;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif; }
+button, input, select, textarea { font-family: inherit; }
+.btn { height: 32px; padding: 4px 15px; line-height: 22px; border-radius: 6px; }
+.btn-primary:hover:not(:disabled), .btn-secondary:hover:not(:disabled) { transform: none; box-shadow: none; }
+.btn-sm { height: 24px; padding: 0 8px; }
+.input, .select { height: 32px; padding: 4px 11px; line-height: 22px; border-radius: 6px; }
+.select { appearance: auto; padding-right: 8px; }
+.select--empty { color: #bfbfbf; }
+.select option { color: #262626; }
+.select:disabled { color: #8c8c8c; background: #fafafa; cursor: not-allowed; }
+.layout .layout-main .layout-content > div { width: 100%; max-width: none; margin: 0; padding: 24px; background: #fff; border: 1px solid #eee; border-radius: 8px; min-height: 100%; }
+.layout .layout-content .page-title { font-size: 18px; line-height: 32px; }
+.drawer-panel { border-radius: 8px; }
+.drawer-body { background: #fff; }
+button:focus-visible, a:focus-visible { outline: 2px solid #1677ff; outline-offset: 2px; }
+@media (max-width: 640px) {
+  .layout .layout-main .layout-content > div { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

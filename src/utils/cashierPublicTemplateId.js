@@ -10,10 +10,13 @@ export function cashierGameNameFromAppId(appId) {
 }
 
 export function paymentSortRowKey(item) {
+  if (item.template_id) return `template|${item.template_id}`
+  if (item.legacy_row_key) return item.legacy_row_key
   return `${item.app_id}|${item.country_code}|${item.currency}|${item.payment_env}|${item.is_web_cashier ? '1' : '0'}`
 }
 
 export function buildPublicTemplateIdBase(item) {
+  if (item.template_id) return item.template_id
   const game = cashierGameNameFromAppId(item.app_id)
   const country = item.country_code || 'NA'
   const currency = item.currency || 'NA'
