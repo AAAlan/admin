@@ -71,6 +71,7 @@ import Icon from '@/components/Icon.vue'
 const overseasItems = [
   { path: '/payment/channels', label: '支付渠道配置' },
   { path: '/payment/sort', label: '全局收银台模版' },
+  { path: '/payment/availability-demo', label: '支付方式决策 Demo' },
   { path: '/scenario', label: '支付场景管理' },
   { path: '/agreement/links', label: '协议设置' },
   { path: '/game-ship-config', label: '游戏发货配置' },
@@ -79,6 +80,7 @@ const overseasItems = [
 const domesticItems = [
   { path: '/domestic/payment/channels', label: '支付渠道配置' },
   { path: '/domestic/payment/sort', label: '全局收银台模版' },
+  { path: '/domestic/payment/availability-demo', label: '支付方式决策 Demo' },
   { path: '/domestic/scenario', label: '支付场景管理' },
   { path: '/domestic/game-ship-config', label: '游戏发货配置' },
   { path: '/domestic/config-release', label: '配置发布' }

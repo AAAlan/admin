@@ -9,6 +9,12 @@ const routes = [
     children: [
       // ========== 支付中心（海外）==========
       {
+        path: '/payment/availability-demo',
+        name: 'PaymentAvailabilityDemo',
+        component: () => import('@/views/payment/PaymentAvailabilityDemo.vue'),
+        meta: { title: '支付方式决策 Demo', region: 'overseas' }
+      },
+      {
         path: '/payment/channels',
         name: 'PaymentChannels',
         component: () => import('@/views/payment/PaymentChannels.vue'),
@@ -111,6 +117,12 @@ const routes = [
       },
 
       // ========== 支付中心（国内）==========
+      {
+        path: '/domestic/payment/availability-demo',
+        name: 'DomesticPaymentAvailabilityDemo',
+        component: () => import('@/views/payment/PaymentAvailabilityDemo.vue'),
+        meta: { title: '支付方式决策 Demo', region: 'domestic' }
+      },
       {
         path: '/domestic/payment/channels',
         name: 'DomesticPaymentChannels',
