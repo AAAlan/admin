@@ -5,6 +5,9 @@
  * 数据持久化到 localStorage（Mock 阶段），正式环境由后端管理。
  */
 
+import { getPlatformOptions } from './platformOptions.js'
+export { PLATFORM_OPTIONS_OVERSEAS, PLATFORM_OPTIONS_DOMESTIC, getPlatformOptions } from './platformOptions.js'
+
 const STORAGE_KEYS = {
   overseas: 'cashier_scenarios_v3',
   /** v4：国内列表按「平台应用内购买」思维导图重置 seed */
@@ -14,16 +17,6 @@ const STORAGE_KEYS = {
 /** 支付场景 · 支付环境枚举（与管理后台「创建/编辑场景」一致） */
 export const PAYMENT_ENV_OPTIONS = ['Mobile', 'PC', '游戏主机']
 export const TEMPLATE_CONFIG_OPTIONS = ['游戏参数配置', '计费点配置', '端内计费点跳转Web支付开关', '计费点配置', '收银台模版配置']
-
-/** 支付中心（海外）· Platform 枚举 */
-export const PLATFORM_OPTIONS_OVERSEAS = ['apple', 'google', 'PSN', 'windows']
-
-/** 支付中心（国内）· Platform 枚举 */
-export const PLATFORM_OPTIONS_DOMESTIC = ['apple', 'huawei', 'vivo', 'PSN', 'windows', 'he']
-
-export function getPlatformOptions(region = 'overseas') {
-  return region === 'domestic' ? PLATFORM_OPTIONS_DOMESTIC : PLATFORM_OPTIONS_OVERSEAS
-}
 
 export const SEED = {
   overseas: [

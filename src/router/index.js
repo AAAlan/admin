@@ -9,6 +9,12 @@ const routes = [
     children: [
       // ========== 支付中心（海外）==========
       {
+        path: '/payment/rollout-demo',
+        name: 'PaymentRolloutDemo',
+        component: () => import('@/views/payment/PaymentRolloutDemo.vue'),
+        meta: { title: '功能开关与灰度发布', region: 'overseas' }
+      },
+      {
         path: '/payment/availability-demo',
         name: 'PaymentAvailabilityDemo',
         component: () => import('@/views/payment/PaymentAvailabilityDemo.vue'),

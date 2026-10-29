@@ -130,7 +130,7 @@
               <h2 class="card-title">支付方式配置</h2>
             </div>
           </div>
-          <p class="card-desc">拖拽调整顺序，排在前面的支付方式会优先展示给用户。可为每条方式单独启用或禁用。</p>
+          <p class="card-desc">拖拽调整顺序，排在前面的支付方式会优先展示给用户。{{ paymentRegion === 'overseas' ? '可为本模版内每条方式设置关闭、灰度或全量开放。' : '可为每条方式单独启用或禁用。' }}</p>
         </div>
         <div class="card-body">
           <div class="config-info">
@@ -219,7 +219,14 @@
               </div>
               <div class="item-actions">
                 <div class="item-order">{{ index + 1 }}</div>
-                <div class="switch-group method-enable-switch" @click.stop>
+                <div v-if="paymentRegion === 'overseas'" class="method-rollout-action" @click.stop>
+                  <button type="button" class="rollout-range-button" :aria-label="`${method.pay_name} ${method.channel_name || method.channel_id} 开放范围`" @click="openMethodRollout(method)">
+                    <span :class="{ 'range-gradual': method.rollout?.mode === 'gradual' && method.enabled !== false }">{{ methodRolloutSummary(method) }}</span>
+                    <small>{{ readonly ? '查看开放范围' : '设置开放范围' }}</small>
+                  </button>
+                  <small v-if="method.rollout?.countries?.length || method.rollout?.platforms?.length || method.rollout?.allow || method.rollout?.deny" class="targeting-hint">已设置人群条件</small>
+                </div>
+                <div v-else class="switch-group method-enable-switch" @click.stop>
                   <label class="switch">
                     <input
                       type="checkbox"
@@ -244,6 +251,7 @@
             </div>
           </div>
 
+          <p v-if="paymentRegion === 'overseas' && channelList.length" class="template-rollout-hint">开放范围仅作用于本模版内的对应支付方式。灰度不改变排序，也不绕过机构与本单资格。修改后需保存模版。</p>
           <div v-if="isConfigReady && channelList.length === 0" class="empty-state">
             <p>暂无支付方式</p>
           </div>
@@ -279,6 +287,16 @@
       </div>
     </div>
 
+    <TemplateMethodRollout
+      v-model:visible="showMethodRollout"
+      :method="rolloutMethod"
+      :template="rolloutTemplateContext"
+      :methods="channelList"
+      :region="paymentRegion"
+      :readonly="readonly"
+      @apply="applyMethodRollout"
+    />
+
     <!-- 支付方式选择器 -->
     <PaymentMethodSelector
       v-model:visible="showMethodSelector"
@@ -311,6 +329,8 @@ import { cashierTemplateStorageKey, readCashierTemplateStore } from '@/utils/cas
 import { cashierCurrencies } from '@/utils/cashierCurrencies.js'
 import I18nTextEditor from '@/components/I18nTextEditor.vue'
 import { getEntry } from '@/utils/i18nTextStore.js'
+import TemplateMethodRollout from './TemplateMethodRollout.vue'
+import { templateMethodEntryId, templateMethodRule, templateRuleErrors, templateRuleSummary } from '@/utils/templatePaymentRollout.js'
 
 export default {
   name: 'PaymentSort',
@@ -336,6 +356,7 @@ export default {
   components: {
     Icon,
     PaymentMethodSelector,
+    TemplateMethodRollout,
     I18nTextEditor
   },
   emits: ['saved', 'cancel'],
@@ -365,6 +386,8 @@ export default {
       originalConfig: null,
       draggedIndex: null,
       showMethodSelector: false,
+      showMethodRollout: false,
+      rolloutMethod: null,
       i18nEditorVisible: false,
       i18nEditingKey: '',
       i18nEditingZhCn: '',
@@ -373,6 +396,16 @@ export default {
     }
   },
   computed: {
+    rolloutTemplateContext() {
+      return {
+        ...this.config,
+        provisional: this.mode === 'modal',
+        template_id: this.config.template_id || `legacy:${this.getCurrentConfigKey()}`,
+        // payment_env is legacy device metadata, not a deployment environment or targeting condition.
+        environment: 'demo',
+        region: this.paymentRegion
+      }
+    },
     paymentRegion() {
       return this.region || this.$route.meta?.region || 'overseas'
     },
@@ -447,6 +480,17 @@ export default {
     await this.applyPrefill(this.prefill || this.$route.query)
   },
   methods: {
+    methodRolloutSummary: templateRuleSummary,
+    openMethodRollout(method) {
+      this.rolloutMethod = method
+      this.showMethodRollout = true
+    },
+    applyMethodRollout({ entryId, rule }) {
+      if (this.readonly || templateRuleErrors(rule, this.paymentRegion).length) return
+      const index = this.channelList.findIndex(method => templateMethodEntryId(method) === entryId)
+      if (index < 0) return
+      this.channelList.splice(index, 1, { ...this.channelList[index], rollout_entry_id: entryId, enabled: rule.mode !== 'off', rollout: JSON.parse(JSON.stringify(rule)) })
+    },
     getCurrentConfigKey() {
       return cashierTemplateStorageKey({ ...this.config, currency: this.config.currency_code }, this.paymentRegion)
     },
@@ -462,6 +506,8 @@ export default {
 
       this.saving = false
       this.showMethodSelector = false
+      this.showMethodRollout = false
+      this.rolloutMethod = null
       this.draggedIndex = null
       this.config.template_id = src.template_id || ''
       this.config.legacy_row_key = src.legacy_row_key || ''
@@ -677,6 +723,13 @@ export default {
     },
     async handleSave() {
       if (this.readonly || this.saving || this.loadingChannels) return
+      if (this.paymentRegion === 'overseas') {
+        const entryIds = this.channelList.map(templateMethodEntryId)
+        if (new Set(entryIds).size !== entryIds.length || this.channelList.some(method => templateRuleErrors(templateMethodRule(method), this.paymentRegion).length)) {
+          this.$message.warning('支付方式开放范围或条目标识异常，请检查后保存')
+          return
+        }
+      }
       if (!this.isConfigReady) {
         this.$message.warning('请选择币种')
         return
@@ -712,6 +765,7 @@ export default {
           is_simulator: !!this.config.is_simulator,
           payment_methods: this.channelList.map((item, index) => ({
             ...item,
+            ...(this.paymentRegion === 'overseas' ? { rollout_entry_id: templateMethodEntryId(item), rollout: templateMethodRule(item) } : {}),
             currency: this.config.currency_code,
             sort_order: index + 1,
             enabled: item.enabled !== false,
@@ -743,6 +797,8 @@ export default {
     },
     handleReset() {
       if (this.readonly || this.saving) return
+      this.showMethodRollout = false
+      this.rolloutMethod = null
       if (this.originalConfig) this.config = JSON.parse(JSON.stringify(this.originalConfig))
       this.channelList = JSON.parse(JSON.stringify(this.originalChannelList))
       this.config.publish_status = this.originalPublishStatus
@@ -793,6 +849,12 @@ export default {
 </script>
 
 <style scoped>
+.method-rollout-action { text-align: center; min-width: 105px; }
+.rollout-range-button { border: 0; background: transparent; cursor: pointer; padding: 4px; font: inherit; display: grid; gap: 5px; color: #344054; margin: auto; }
+.rollout-range-button small { color: #4669df; font-size: 12px; }
+.range-gradual { color: #315bea; background: #eef3ff; border-radius: 4px; padding: 3px 8px; }
+.targeting-hint { color: #667085; font-size: 11px; }
+.template-rollout-hint { color: #667085; font-size: 12px; line-height: 1.6; margin: 12px 0; }
 .add-method-button { margin-top: 12px; }
 .page-container {
   max-width: 1400px;
