@@ -16,6 +16,14 @@ try {
   const reconcile = () => Page.watch.decisionInputs.call(vm)
 
   assert.equal(vm.decision.availableMethods.length, 2)
+  assert.equal(vm.tab, 'methods')
+  assert.deepEqual(vm.tabs.map(item => item.name), ['支付方式', '展示策略', '测试预览'])
+  assert.equal(vm.filteredMethods.length, 4)
+  vm.methodSearch = '银行'
+  assert.deepEqual(vm.filteredMethods.map(item => item.id), ['card'])
+  vm.methodSearch = '不存在'
+  assert.equal(vm.filteredMethods.length, 0)
+  vm.methodSearch = ''
   vm.loadCase('multi_channel')
   reconcile()
   assert.equal(vm.decision.availableMethods.length, 3)
@@ -192,6 +200,61 @@ try {
   assert(vm.decisionSnapshot.some(item => item.detail.includes('用户偏好排序 → 用户偏好排序')))
   vm.resetDemo()
 
+  // The new workspace applies one reviewed change set, not two independent saves.
+  vm.openMethod('wallet_a')
+  assert.equal(vm.editingMethod.id, 'wallet_a')
+  vm.editingMethod.minAmount = '3.00'
+  vm.closeMethod()
+  assert.equal(vm.editingMethod, null)
+  assert.equal(vm.template.methods[0].minAmount, '0.01', 'Closing details retains draft, not live changes')
+  assert.equal(vm.methodChanged('wallet_a'), true)
+  vm.methodFilter = 'changed'
+  assert.deepEqual(vm.filteredMethods.map(item => item.id), ['wallet_a'])
+  assert.equal(vm.pendingChanges.length, 1)
+  vm.strategyDraft.baseOrder = ['wallet_a', 'wallet_a']
+  assert.equal(vm.applyConfiguration(), false)
+  assert.equal(vm.template.version, 1, 'Invalid strategy must also prevent partial rule application')
+  assert.equal(vm.template.methods[0].minAmount, '0.01')
+  vm.discardStrategy()
+  vm.strategyDraft.mode = 'preference'
+  vm.draftTemplate.methods[0].minAmount = '6000.00'
+  assert.equal(vm.applyConfiguration(), false)
+  assert.equal(vm.strategy.version, 1, 'Invalid rule must also prevent partial strategy application')
+  assert.equal(vm.strategy.mode, 'fixed')
+  vm.draftTemplate.methods[0].minAmount = '3.00'
+  vm.strategyDraft.mode = 'preference'
+  vm.strategyDraft.backupEnabled = true
+  vm.queryMode = 'timeout'
+  vm.template.methods[1].channels[0].health = 'maintenance'
+  assert.equal(vm.pendingChanges.length, 3)
+  assert.equal(vm.applyConfiguration(), true)
+  assert.equal(vm.template.version, 2)
+  assert.equal(vm.strategy.version, 2)
+  assert.equal(vm.tab, 'simulation')
+  assert.equal(vm.testView, 'single')
+  assert.equal(vm.hasChanges, false)
+  assert.equal(vm.queryMode, 'timeout')
+  assert.equal(vm.template.methods[1].channels[0].health, 'maintenance')
+  assert(vm.configurationNotice.includes('未发布线上'))
+  vm.restoreTestEnvironment()
+  assert.equal(vm.queryMode, 'normal')
+  assert.equal(vm.template.methods[1].channels[0].health, 'available')
+  assert.equal(vm.template.methods[0].minAmount, '3.00', 'Restore test conditions must not reset configured business rules')
+  assert.equal(vm.strategy.mode, 'preference')
+  assert.equal(vm.hasChanges, false, 'Fault simulation is never a configuration draft')
+  vm.draftTemplate.methods[2].enabled = false
+  vm.strategyDraft.defaultPolicy = 'first'
+  vm.restoreTestEnvironment()
+  assert.equal(vm.draftTemplate.methods[2].enabled, false, 'Restore test conditions retains unfinished method edits')
+  assert.equal(vm.strategyDraft.defaultPolicy, 'first', 'Restore test conditions retains unfinished strategy edits')
+  assert.equal(vm.selectedMethodId, '', 'Restore test conditions must not apply a draft default or auto-select')
+  vm.methodFilter = 'disabled'
+  assert.deepEqual(vm.filteredMethods.map(item => item.id), ['card'])
+  vm.discardConfiguration()
+  assert.equal(vm.hasChanges, false)
+  assert.equal(vm.template.methods[2].enabled, true)
+  vm.resetDemo()
+
   vm.$route.meta.region = 'overseas'
   Page.watch['$route.meta.region'].call(vm)
   assert.equal(vm.template.currency, 'USD')
@@ -202,12 +265,22 @@ try {
   app.config.globalProperties.$route = { meta: { region: 'domestic' } }
   const html = await renderToString(app)
   assert(html.includes('收银台支付方式决策'))
-  assert(html.includes('2 / 4 种可用'))
-  assert(html.includes('模拟发起前校验'))
-  assert(html.includes('demo_shared_cny'))
-  assert(html.includes('查看本次决策快照与模板尝试'))
+  assert(html.includes('支付方式列表'))
+  assert(html.includes('搜索支付方式'))
+  assert(html.includes('查看变更并应用'))
+  const buttonLabels = (html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) || []).map(button => button.replace(/<[^>]*>/g, '').trim())
+  assert.equal(buttonLabels.filter(label => label === '测试预览').length, 1, 'Testing has one navigation entry, not duplicate actions')
+  assert(!html.includes('模拟发起前校验'), 'Default view focuses on configuration, not test/debug controls')
   assert(!html.includes('ReferenceError'))
-  console.log('Passed: page render; eligibility and query guards; rule/strategy draft isolation; three sorting modes and fallback; independent tags/default; ranking lock/refresh; template-bound selection; backup switch confirmation; tax/mixed orders; reset and region isolation.')
+  const testApp = createSSRApp({ ...Page, data() { return { ...Page.data.call(this), tab: 'simulation' } } })
+  testApp.config.globalProperties.$route = { meta: { region: 'domestic' } }
+  const testHtml = await renderToString(testApp)
+  assert(testHtml.includes('2 / 4 种可用'))
+  assert(testHtml.includes('模拟发起前校验'))
+  assert(testHtml.includes('查看决策详情'))
+  assert(testHtml.includes('高级测试'))
+  assert(!testHtml.includes('支付方式业务限制配置'), 'Simulation does not duplicate configuration editing')
+  console.log('Passed: configuration/test separation; searchable method list; detail draft retention; atomic reviewed application; test restoration isolation; page render; eligibility/query guards; three sorting modes and fallback; ranking lock; template-bound selection; backup confirmation; reset and region isolation.')
 } finally {
   await server.close()
 }
