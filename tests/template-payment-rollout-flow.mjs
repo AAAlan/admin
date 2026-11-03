@@ -72,7 +72,11 @@ try {
   })
   await form.applyPrefill(a)
   form.config.payment_env = 'pc'
-  assert.equal(form.rolloutTemplateContext.environment, 'demo', 'Legacy device metadata is never the rollout environment')
+  assert.equal(
+    form.rolloutTemplateContext.environment,
+    'demo',
+    'Legacy device metadata is never the rollout environment',
+  )
   const before = JSON.stringify([...storage])
   form.openMethodRollout(form.channelList[0])
   const rule = {
@@ -152,34 +156,51 @@ try {
   editor.apply()
   assert(editor.error.includes('最多两位小数'))
   editor.draft.percentage = 5
-  editor.profile.platform = 'apple'
-  assert.equal(editor.results[0].code, 'PLATFORM_MISS')
-  editor.profile.platform = 'google'
-  assert.equal(editor.results[0].code, 'ALLOW')
-  editor.eligibleSample = false
-  assert(editor.results.every((result) => !result.hit))
-  const context = {}
-  const html = await renderToString(
-    createSSRApp(Editor, {
-      visible: true,
-      readonly: false,
-      method: reopened.channelList[0],
-      template: reopened.rolloutTemplateContext,
-      methods: reopened.channelList,
-      region: 'overseas',
-    }),
-    context,
-  )
-  assert(html.includes('teleport'))
-  assert(context.teleports.body.includes('本模版效果试算'))
-  assert(context.teleports.body.includes('用户 platform'))
-  assert(!context.teleports.body.includes('客户端'))
-  assert(
-    !/<details[^>]*open/.test(context.teleports.body),
-    'Advanced conditions start collapsed',
-  )
+  const events = []
+  editor.$emit = (...args) => events.push(args)
+  editor.apply()
+  assert.deepEqual(events, [
+    ['apply', { entryId: templateMethodEntryId(editor.method), rule }],
+    ['update:visible', false],
+  ])
+  assert.equal(Editor.methods.schedulePreview, undefined)
+  assert.equal(Editor.methods.fetchPreview, undefined)
+  assert.equal(Object.hasOwn(editor, 'profile'), false)
+  editor.readonly = true
+  editor.apply()
+  assert.equal(events.length, 2, 'Readonly dialog cannot apply changes')
+  for (const useBackend of [false, true]) {
+    for (const readonly of [false, true]) {
+      const context = {}
+      const html = await renderToString(
+        createSSRApp(Editor, {
+          visible: true,
+          readonly,
+          method: reopened.channelList[0],
+          template: { ...reopened.rolloutTemplateContext, useBackend },
+          methods: reopened.channelList,
+          region: 'overseas',
+        }),
+        context,
+      )
+      assert(html.includes('teleport'))
+      const body = context.teleports.body
+      assert(!body.includes('效果试算'))
+      assert(!body.includes('试算来源'))
+      assert(!body.includes('preview-fields'))
+      assert(!body.includes('本单机构与交易资格通过'))
+      assert(body.includes('用户 platform'))
+      assert(body.includes('开放范围'))
+      assert(!body.includes('客户端'))
+      assert.equal(body.includes('应用到当前模版'), !readonly)
+      assert(
+        !/<details[^>]*open/.test(body),
+        'Advanced conditions start collapsed',
+      )
+    }
+  }
   console.log(
-    'Passed: real template form apply/reset/save/reopen, per-channel/template isolation, readonly, editor validation and eligibility preview; isolated in-memory storage only.',
+    'Passed: real template form apply/reset/save/reopen, per-channel/template isolation, readonly, editor validation, and no preview UI in Mock/backend dialogs; isolated in-memory storage only.',
   )
 } finally {
   await server.close()
