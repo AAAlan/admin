@@ -1,5 +1,6 @@
 // API服务 - 使用Mock数据
 import { mockAPI } from './mock'
+import { rolloutBackendEnabled, rolloutTemplateAPI } from './rolloutBackend.js'
 
 // 应用相关API（支付配置需要）
 export const appAPI = {
@@ -70,10 +71,14 @@ export const paymentAPI = {
 
   // 获取支付方式排序列表
   getPaymentSortList(params) {
+    if (rolloutBackendEnabled && params?.region !== 'domestic') return rolloutTemplateAPI.list(params)
     return mockAPI.getPaymentSortList(params)
   },
 
+  getCashierTemplate(templateId) { return rolloutTemplateAPI.read(templateId) },
+
   saveCashierTemplate(data) {
+    if (rolloutBackendEnabled && data.region !== 'domestic') return rolloutTemplateAPI.save(data)
     return mockAPI.saveCashierTemplate(data)
   },
 
@@ -94,6 +99,7 @@ export const paymentAPI = {
   },
 
   deleteCashierTemplate(data) {
+    if (rolloutBackendEnabled && data.region !== 'domestic') throw new Error('服务端模版不提供直接删除；请通过审核发布关闭模版')
     return mockAPI.deleteCashierTemplate(data)
   },
 

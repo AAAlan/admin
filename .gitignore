@@ -27,3 +27,9 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Local backend data (rules may contain private pilot user IDs)
+.data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

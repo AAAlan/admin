@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container cashier-config" :class="{ 'is-readonly': readonly, 'cashier-config--embedded': mode !== 'page' }">
+  <div class="page-container cashier-config" :class="{ 'is-readonly': formReadonly, 'cashier-config--embedded': mode !== 'page' }">
     <div v-if="mode === 'page'" class="page-header">
       <h1 class="page-title">全局收银台模版</h1>
       <router-link
@@ -13,7 +13,7 @@
     </div>
 
     <div class="page-content">
-      <div v-if="readonly" class="readonly-banner">当前为只读模式</div>
+      <div v-if="formReadonly" class="readonly-banner">当前配置仅可查看；发布操作按服务端身份授权。</div>
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">基础配置</h2>
@@ -30,7 +30,7 @@
                 type="text"
                 class="input"
                 :class="{ 'input--invalid': config.cashier_template_name && !isCashierTemplateNameValid }"
-                :disabled="readonly"
+                :disabled="formReadonly"
                 placeholder="请输入收银台模版名称"
                 maxlength="64"
                 autocomplete="off"
@@ -51,7 +51,7 @@
                     <input
                       v-model="config.is_simulator"
                       type="checkbox"
-                      :disabled="readonly"
+                      :disabled="formReadonly"
                       :aria-labelledby="'sort-simulator-label'"
                     />
                     <span class="switch-slider" />
@@ -71,7 +71,7 @@
                 v-model="config.currency_code"
                 class="select"
                 :class="{ 'select--empty': !config.currency_code }"
-                :disabled="readonly || lockDomesticBasicFields"
+                :disabled="formReadonly || lockDomesticBasicFields"
                 @change="handleCurrencyChange"
                 required
                 aria-required="true"
@@ -98,7 +98,7 @@
                     type="radio"
                     class="radio-input"
                     :value="false"
-                    :disabled="readonly || lockDomesticTemplateType"
+                    :disabled="formReadonly || lockDomesticTemplateType"
                   />
                   <span>原生收银台模版</span>
                 </label>
@@ -108,7 +108,7 @@
                     type="radio"
                     class="radio-input"
                     :value="true"
-                    :disabled="readonly || lockDomesticTemplateType"
+                    :disabled="formReadonly || lockDomesticTemplateType"
                   />
                   <span>Web 收银台模版</span>
                 </label>
@@ -130,7 +130,7 @@
               <h2 class="card-title">支付方式配置</h2>
             </div>
           </div>
-          <p class="card-desc">拖拽调整顺序，排在前面的支付方式会优先展示给用户。{{ paymentRegion === 'overseas' ? '可为本模版内每条方式设置关闭、灰度或全量开放。' : '可为每条方式单独启用或禁用。' }}</p>
+          <p class="card-desc">拖拽调整顺序，排在前面的支付方式会优先展示给用户。{{ useRolloutBackend ? '按业务支付方式设置开放范围，同一方式的多个渠道共享灰度。' : paymentRegion === 'overseas' ? '可为本模版内每条方式设置关闭、灰度或全量开放。' : '可为每条方式单独启用或禁用。' }}</p>
         </div>
         <div class="card-body">
           <div class="config-info">
@@ -151,7 +151,7 @@
               :key="`${method.channel_id}::${method.pay_name}`"
               class="sortable-item"
               :class="{ 'sortable-item--disabled': method.enabled === false }"
-              :draggable="!readonly"
+              :draggable="!formReadonly"
               @dragstart="handleDragStart(index, $event)"
               @dragover.prevent="handleDragOver(index, $event)"
               @drop="handleDrop(index, $event)"
@@ -180,7 +180,7 @@
                     <input
                       type="checkbox"
                       v-model="method.is_recommended"
-                      :disabled="readonly"
+                      :disabled="formReadonly"
                     />
                     推荐支付方式
                   </label>
@@ -189,7 +189,7 @@
                       v-model="method.recommend_text"
                       type="text"
                       class="input recommend-input"
-                      :disabled="readonly"
+                      :disabled="formReadonly"
                       placeholder="请输入推荐文案，如：到账快、手续费低"
                       aria-label="推荐文案"
                     />
@@ -210,7 +210,7 @@
                       <input
                         v-model="method.qr_scan_pay"
                         type="checkbox"
-                        :disabled="readonly"
+                        :disabled="formReadonly"
                       />
                       二维码扫码支付
                     </label>
@@ -222,16 +222,17 @@
                 <div v-if="paymentRegion === 'overseas'" class="method-rollout-action" @click.stop>
                   <button type="button" class="rollout-range-button" :aria-label="`${method.pay_name} ${method.channel_name || method.channel_id} 开放范围`" @click="openMethodRollout(method)">
                     <span :class="{ 'range-gradual': method.rollout?.mode === 'gradual' && method.enabled !== false }">{{ methodRolloutSummary(method) }}</span>
-                    <small>{{ readonly ? '查看开放范围' : '设置开放范围' }}</small>
+                    <small>{{ formReadonly ? '查看开放范围' : '设置开放范围' }}</small>
                   </button>
                   <small v-if="method.rollout?.countries?.length || method.rollout?.platforms?.length || method.rollout?.allow || method.rollout?.deny" class="targeting-hint">已设置人群条件</small>
+                  <small v-if="useRolloutBackend && method.enabled === false" class="targeting-hint">此渠道停用，不因全量开放而恢复</small>
                 </div>
                 <div v-else class="switch-group method-enable-switch" @click.stop>
                   <label class="switch">
                     <input
                       type="checkbox"
                       :checked="method.enabled !== false"
-                      :disabled="readonly"
+                      :disabled="formReadonly"
                       :aria-label="`${method.pay_name} ${method.enabled !== false ? '启用' : '禁用'}`"
                       @change="togglePaymentMethodEnabled(method, $event)"
                     />
@@ -240,7 +241,7 @@
                   <span class="switch-label">{{ method.enabled !== false ? '启用' : '禁用' }}</span>
                 </div>
                 <button
-                  v-if="!readonly"
+                  v-if="!formReadonly"
                   class="btn btn-text btn-danger-text"
                   @click.stop="handleRemoveMethod(index)"
                   :aria-label="`移除 ${method.pay_name}`"
@@ -251,23 +252,25 @@
             </div>
           </div>
 
-          <p v-if="paymentRegion === 'overseas' && channelList.length" class="template-rollout-hint">开放范围仅作用于本模版内的对应支付方式。灰度不改变排序，也不绕过机构与本单资格。修改后需保存模版。</p>
+          <p v-if="paymentRegion === 'overseas' && channelList.length" class="template-rollout-hint">开放范围仅作用于本模版内的对应支付方式。灰度不改变排序，也不绕过机构与本单资格。{{ useRolloutBackend ? '修改后需保存草稿并独立审核发布。' : '修改后需保存模版。' }}</p>
           <div v-if="isConfigReady && channelList.length === 0" class="empty-state">
             <p>暂无支付方式</p>
           </div>
-          <button v-if="!readonly && isConfigReady" class="btn btn-secondary add-method-button" @click="handleAddMethod" aria-label="添加支付方式">
+          <button v-if="!formReadonly && isConfigReady" class="btn btn-secondary add-method-button" @click="handleAddMethod" aria-label="添加支付方式">
             <Icon name="plus" :size="16" />
             <span>添加支付方式</span>
           </button>
         </div>
       </div>
 
+      <TemplateRolloutRelease v-if="useRolloutBackend" :template-id="config.template_id" :dirty="hasChanges" :refresh-key="backendRefreshKey" :read-only="readonly" @state="receiveBackendState" @role="backendRole = $event" />
+
       <div v-if="!readonly || mode !== 'page'" class="form-footer">
         <button
           type="button"
           class="btn btn-primary"
           v-if="!readonly"
-          :disabled="saving || loadingChannels"
+          :disabled="saving || loadingChannels || (useRolloutBackend && (backendRole !== 'editor' || !!backendState?.pending))"
           @click="handleSave"
           :aria-label="primarySaveAriaLabel"
         >
@@ -293,7 +296,7 @@
       :template="rolloutTemplateContext"
       :methods="channelList"
       :region="paymentRegion"
-      :readonly="readonly"
+      :readonly="formReadonly"
       @apply="applyMethodRollout"
     />
 
@@ -331,6 +334,9 @@ import I18nTextEditor from '@/components/I18nTextEditor.vue'
 import { getEntry } from '@/utils/i18nTextStore.js'
 import TemplateMethodRollout from './TemplateMethodRollout.vue'
 import { templateMethodEntryId, templateMethodRule, templateRuleErrors, templateRuleSummary } from '@/utils/templatePaymentRollout.js'
+import { rolloutBackendEnabled, backendTemplateRecord } from '@/api/rolloutBackend.js'
+import { businessMethodId } from '@/utils/businessPaymentRollout.js'
+import TemplateRolloutRelease from './TemplateRolloutRelease.vue'
 
 export default {
   name: 'PaymentSort',
@@ -357,6 +363,7 @@ export default {
     Icon,
     PaymentMethodSelector,
     TemplateMethodRollout,
+    TemplateRolloutRelease,
     I18nTextEditor
   },
   emits: ['saved', 'cancel'],
@@ -384,6 +391,9 @@ export default {
       saving: false,
       loadingChannels: false,
       originalConfig: null,
+      backendState: null,
+      backendRole: 'editor',
+      backendRefreshKey: 0,
       draggedIndex: null,
       showMethodSelector: false,
       showMethodRollout: false,
@@ -396,13 +406,18 @@ export default {
     }
   },
   computed: {
+    formReadonly() { return this.readonly || (this.useRolloutBackend && (this.backendRole !== 'editor' || !!this.backendState?.pending)) },
+    useRolloutBackend() { return rolloutBackendEnabled && this.paymentRegion === 'overseas' },
     rolloutTemplateContext() {
       return {
         ...this.config,
-        provisional: this.mode === 'modal',
+        currency: this.config.currency_code,
+        enabled: this.backendState?.draft.enabled ?? true,
+        useBackend: this.useRolloutBackend,
+        provisional: this.useRolloutBackend ? !this.config.template_id : this.mode === 'modal',
         template_id: this.config.template_id || `legacy:${this.getCurrentConfigKey()}`,
         // payment_env is legacy device metadata, not a deployment environment or targeting condition.
-        environment: 'demo',
+        environment: this.backendState?.draft.environment || 'demo',
         region: this.paymentRegion
       }
     },
@@ -437,18 +452,19 @@ export default {
       return /^[a-zA-Z0-9_-]{2,64}$/.test(t)
     },
     hasChanges() {
-      if (this.mode === 'modal') return true
+      if (this.mode === 'modal' && !this.useRolloutBackend) return true
       return (
         JSON.stringify(this.channelList) !== JSON.stringify(this.originalChannelList) ||
         this.config.publish_status !== this.originalPublishStatus ||
         String(this.config.cashier_template_name || '').trim() !==
           String(this.originalCashierTemplateName || '').trim() ||
-        !!this.config.is_simulator !== !!this.originalIsSimulator
+        !!this.config.is_simulator !== !!this.originalIsSimulator ||
+        (this.useRolloutBackend && this.originalConfig && (this.config.currency_code !== this.originalConfig.currency_code || this.config.is_web_cashier !== this.originalConfig.is_web_cashier))
       )
     },
     primarySaveLabel() {
       if (this.paymentRegion === 'domestic') return this.mode === 'modal' ? '发布' : '确认'
-      return '保存'
+      return this.useRolloutBackend ? '保存服务端草稿' : '保存'
     },
     primarySavePendingLabel() {
       if (this.paymentRegion === 'domestic') return this.mode === 'modal' ? '发布中...' : '确认中...'
@@ -480,7 +496,24 @@ export default {
     await this.applyPrefill(this.prefill || this.$route.query)
   },
   methods: {
-    methodRolloutSummary: templateRuleSummary,
+    receiveBackendState(state) {
+      const previousRevision = this.backendState?.revision
+      this.backendState = state
+      if (previousRevision !== undefined && previousRevision !== state.revision) this.$emit('saved')
+      if (state.draftRevision !== this.config.baseDraftRevision && !this.hasChanges && this.config.template_id) {
+        this.channelList = backendTemplateRecord(state).payment_methods
+        this.config.currency_code = state.draft.currency
+        this.config.cashier_template_name = state.draft.cashier_template_name
+        this.config.is_simulator = state.draft.is_simulator
+        this.config.is_web_cashier = state.draft.is_web_cashier
+        this.config.baseDraftRevision = state.draftRevision
+        this.originalChannelList = JSON.parse(JSON.stringify(this.channelList))
+        this.originalConfig = JSON.parse(JSON.stringify(this.config))
+        this.originalCashierTemplateName = this.config.cashier_template_name
+        this.originalIsSimulator = this.config.is_simulator
+      }
+    },
+    methodRolloutSummary(method) { return templateRuleSummary(this.useRolloutBackend ? { ...method, enabled: true } : method) },
     openMethodRollout(method) {
       this.rolloutMethod = method
       this.showMethodRollout = true
@@ -489,12 +522,18 @@ export default {
       if (this.readonly || templateRuleErrors(rule, this.paymentRegion).length) return
       const index = this.channelList.findIndex(method => templateMethodEntryId(method) === entryId)
       if (index < 0) return
+      if (this.useRolloutBackend) {
+        const id = businessMethodId(this.channelList[index])
+        this.channelList = this.channelList.map(method => businessMethodId(method) === id ? { ...method, business_method_id: id, rollout: JSON.parse(JSON.stringify(rule)) } : method)
+        return
+      }
       this.channelList.splice(index, 1, { ...this.channelList[index], rollout_entry_id: entryId, enabled: rule.mode !== 'off', rollout: JSON.parse(JSON.stringify(rule)) })
     },
     getCurrentConfigKey() {
       return cashierTemplateStorageKey({ ...this.config, currency: this.config.currency_code }, this.paymentRegion)
     },
     readPersistedCurrentConfig() {
+      if (this.useRolloutBackend) return this.config.template_id ? paymentAPI.getCashierTemplate(this.config.template_id).then(res => res.data) : null
       const store = readCashierTemplateStore()
       const key = this.getCurrentConfigKey()
       const item = store[key]
@@ -510,6 +549,8 @@ export default {
       this.rolloutMethod = null
       this.draggedIndex = null
       this.config.template_id = src.template_id || ''
+      this.config.baseDraftRevision = src.backendState?.draftRevision
+      this.backendState = src.backendState || null
       this.config.legacy_row_key = src.legacy_row_key || ''
 
       this.config.app_id = src.app_id || ''
@@ -570,8 +611,12 @@ export default {
       }
       this.loadingChannels = true
       try {
-        const persisted = this.readPersistedCurrentConfig()
+        const persisted = await this.readPersistedCurrentConfig()
         if (persisted) {
+          if (this.useRolloutBackend) {
+            this.backendState = persisted.backendState
+            this.config.baseDraftRevision = persisted.backendState.draftRevision
+          }
           if (!this.prefill?.publish_status) {
             this.config.publish_status = persisted.publish_status || this.config.publish_status || 'offline'
           }
@@ -698,7 +743,7 @@ export default {
       }
     },
     handleMethodSelected(methods) {
-      if (this.readonly) return
+      if (this.formReadonly) return
       methods.forEach(method => {
         const newMethod = {
           ...method,
@@ -713,6 +758,13 @@ export default {
           currency: this.config.currency_code,
           sort_order: this.channelList.length + 1
         }
+        if (this.useRolloutBackend) {
+          const id = businessMethodId(newMethod)
+          const existing = this.channelList.find(entry => businessMethodId(entry) === id)
+          newMethod.business_method_id = id
+          // A new PSP inherits the business rule; a new business method starts closed.
+          newMethod.rollout = existing ? templateMethodRule(existing) : { mode: 'off', percentage: 0, countries: [], platforms: [], allow: '', deny: '' }
+        }
         const exists = this.channelList.some(
           m => m.pay_name === newMethod.pay_name && m.channel_id === newMethod.channel_id
         )
@@ -722,7 +774,7 @@ export default {
       })
     },
     async handleSave() {
-      if (this.readonly || this.saving || this.loadingChannels) return
+      if (this.readonly || this.saving || this.loadingChannels || (this.useRolloutBackend && (this.backendRole !== 'editor' || this.backendState?.pending))) return
       if (this.paymentRegion === 'overseas') {
         const entryIds = this.channelList.map(templateMethodEntryId)
         if (new Set(entryIds).size !== entryIds.length || this.channelList.some(method => templateRuleErrors(templateMethodRule(method), this.paymentRegion).length)) {
@@ -752,8 +804,10 @@ export default {
       try {
         const saveData = {
           template_id: this.config.template_id,
+          baseDraftRevision: this.config.baseDraftRevision,
+          enabled: this.backendState?.draft.enabled ?? true,
           legacy_row_key: this.config.legacy_row_key,
-          create: this.mode === 'modal',
+          create: this.useRolloutBackend ? !this.config.template_id : this.mode === 'modal',
           app_id: this.config.app_id,
           country_code: this.config.country_code,
           currency: this.config.currency_code,
@@ -778,7 +832,13 @@ export default {
         if (res.code !== 200) throw new Error(res.message || '保存失败')
         this.config.template_id = res.data.template_id || ''
         this.config.publish_status = res.data.publish_status
-        this.$message.success('保存成功')
+        if (this.useRolloutBackend) {
+          this.backendState = res.data.backendState
+          this.config.baseDraftRevision = res.data.backendState.draftRevision
+          this.channelList = res.data.payment_methods
+          this.backendRefreshKey++
+        }
+        this.$message.success(this.useRolloutBackend ? '服务端草稿已保存，尚未改变生效版本' : '保存成功')
         this.originalChannelList = JSON.parse(JSON.stringify(this.channelList))
         this.originalPublishStatus = this.config.publish_status
         this.originalCashierTemplateName = String(this.config.cashier_template_name || '').trim()
@@ -786,10 +846,10 @@ export default {
         this.originalConfig = JSON.parse(JSON.stringify(this.config))
         if (this.mode === 'drawer' || this.mode === 'modal') {
           this.$emit('saved')
-          if (this.mode === 'drawer') this.$emit('cancel')
+          if (this.mode === 'drawer' && !this.useRolloutBackend) this.$emit('cancel')
         }
       } catch (err) {
-        this.$message.error('保存失败')
+        this.$message.error(err.message || '保存失败')
         console.error(err)
       } finally {
         this.saving = false

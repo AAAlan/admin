@@ -173,7 +173,7 @@
                           </td>
                           <td>
                             <div class="subchannel-actions">
-                              <button class="btn btn-primary btn-sm" @click="handleEditSubchannel(method)" aria-label="编辑子渠道">
+                              <button class="btn btn-primary btn-sm" @click="handleEditSubchannel(channel, method)" aria-label="编辑子渠道">
                                 <Icon name="edit" :size="14" />
                                 <span>编辑</span>
                               </button>
@@ -480,10 +480,12 @@ export default {
       this.onSubCreateModalClose()
       this.fetchChannels()
     },
-    handleEditSubchannel(method) {
+    handleEditSubchannel(channel, method) {
       this.subEditDrawerPayload = {
         id: method.id,
-        pay_name: method.pay_name || ''
+        pay_name: method.pay_name || '',
+        _parentChannelId: channel.channel_id,
+        _parentChannelName: channel.pay_name || channel.channel_name,
       }
       this.subEditDrawerVisible = true
     },

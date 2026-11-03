@@ -11,7 +11,7 @@ const routes = [
       {
         path: '/payment/rollout-demo',
         name: 'PaymentRolloutDemo',
-        component: () => import('@/views/payment/PaymentRolloutDemo.vue'),
+        component: () => import('@/views/payment/PaymentRolloutHome.vue'),
         meta: { title: '功能开关与灰度发布', region: 'overseas' }
       },
       {

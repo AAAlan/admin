@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container" :class="{ 'is-readonly': readonly }">
+  <div class="page-container" :class="{ 'is-readonly': readonly, 'is-embedded': mode !== 'page' }">
     <div v-if="mode === 'page'" class="page-header">
       <h1 class="page-title">{{ isEdit ? '编辑支付方式' : '创建支付方式' }}</h1>
       <router-link
@@ -115,6 +115,15 @@
           </button>
         </div>
       </form>
+      <SubchannelFeatureRollout
+        v-if="apiRegion === 'overseas' && isEdit && featureChannelId && featureKeys.length"
+        :channel-id="featureChannelId"
+        :subchannel-id="String(entityId)"
+        :business-method-id="featureBusinessId"
+        :channel-name="prefill?._parentChannelName || featureChannelId"
+        :readonly="readonly"
+        :region="apiRegion"
+      />
     </div>
   </div>
 </template>
@@ -122,11 +131,15 @@
 <script>
 import { paymentAPI } from '@/api'
 import Icon from '@/components/Icon.vue'
+import SubchannelFeatureRollout from './SubchannelFeatureRollout.vue'
+import { businessMethodId } from '@/utils/businessPaymentRollout.js'
+import { subchannelFeatureKeys } from '@/utils/subchannelRollout.js'
 
 export default {
   name: 'PaymentMethodEdit',
   components: {
-    Icon
+    Icon,
+    SubchannelFeatureRollout,
   },
   props: {
     mode: {
@@ -168,6 +181,9 @@ export default {
     }
   },
   computed: {
+    featureChannelId() { return this.prefill?._parentChannelId || (this.formData.channel_ids.length === 1 ? this.formData.channel_ids[0] : '') },
+    featureBusinessId() { return businessMethodId({ pay_name: this.prefill?.pay_name || this.formData.pay_name }) },
+    featureKeys() { return subchannelFeatureKeys(this.featureBusinessId) },
     apiRegion() {
       return this.$route.meta?.region || 'overseas'
     },
@@ -471,6 +487,21 @@ export default {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: var(--spacing-xl);
+}
+
+.is-embedded {
+  padding: 0;
+}
+
+.is-embedded > .page-content {
+  padding: 0;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .is-embedded .card-body {
+    padding: 12px;
+  }
 }
 
 .readonly-banner {

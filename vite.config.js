@@ -11,7 +11,10 @@ export default defineConfig({
   },
   server: {
     port: 3001,
-    open: true
+    open: true,
+    proxy: {
+      '/api/rollout': { target: 'http://127.0.0.1:3002' }
+    }
   },
   build: {
     outDir: 'dist',

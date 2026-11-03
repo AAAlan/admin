@@ -3,8 +3,16 @@
   "version": "1.0.0",
   "description": "支付配置与订单管理后台",
   "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "dev": "vite",
+    "dev:full": "node scripts/dev-full.mjs",
+    "dev:api": "node server/index.mjs --demo",
+    "api": "node server/index.mjs",
+    "test:rollout-api": "node --test tests/rollout-api.mjs",
+    "test:subchannel-rollout": "node --test tests/subchannel-rollout.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "serve": "vite preview",

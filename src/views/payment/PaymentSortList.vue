@@ -21,6 +21,7 @@
       </div>
     </div>
 
+    <p v-if="useRolloutBackend" class="backend-mode-banner">服务端模式 · 海外模版来自 SQLite，与原本机 Mock 隔离。保存为草稿，独立审核后生效；身份与机构能力仅本地样本。</p>
     <div class="page-filters">
       <div class="filter-row">
         <div class="filter-item">
@@ -104,6 +105,7 @@
           <tr v-for="item in sortList" :key="'sort_' + paymentSortRowKey(item)" role="row">
             <td role="cell">
               <span class="template-display-name">{{ getCashierTemplateDisplayName(item) }}</span>
+              <small v-if="item.backendState" class="backend-version">生效 v{{ item.backendState.revision }} / 草稿 r{{ item.backendState.draftRevision }}{{ item.backendState.pending ? ' · 待审核' : '' }}</small>
             </td>
             <td v-if="resolvedRegion === 'domestic'" role="cell">
               {{ formatDomesticCashierKind(item) }}
@@ -144,7 +146,7 @@
               >
                 <span>查看</span>
               </button>
-              <button v-if="resolvedRegion === 'overseas'" type="button" class="btn btn-text table-action-link delete-action" :disabled="!!deletingKeys[paymentSortRowKey(item)]" :aria-label="`删除 ${getCashierTemplateDisplayName(item)}`" @click="handleDeleteSort(item)">删除</button>
+              <button v-if="resolvedRegion === 'overseas' && !useRolloutBackend" type="button" class="btn btn-text table-action-link delete-action" :disabled="!!deletingKeys[paymentSortRowKey(item)]" :aria-label="`删除 ${getCashierTemplateDisplayName(item)}`" @click="handleDeleteSort(item)">删除</button>
             </td>
           </tr>
         </tbody>
@@ -230,6 +232,7 @@ import Drawer from '@/components/Drawer.vue'
 import PaymentSort from './PaymentSort.vue'
 import { getCashierPublicTemplateId, paymentSortRowKey } from '@/utils/cashierPublicTemplateId.js'
 import { cashierCurrencies } from '@/utils/cashierCurrencies.js'
+import { rolloutBackendEnabled } from '@/api/rolloutBackend.js'
 
 export default {
   name: 'PaymentSortList',
@@ -278,6 +281,7 @@ export default {
     }
   },
   computed: {
+    useRolloutBackend() { return rolloutBackendEnabled && this.resolvedRegion === 'overseas' },
     resolvedRegion() {
       return this.region || this.$route.meta?.region || 'overseas'
     },
@@ -353,7 +357,7 @@ export default {
       this.createPayload = null
     },
     async handleCreateModalSaved() {
-      this.onSortCreateModalClose()
+      if (!this.useRolloutBackend) this.onSortCreateModalClose()
       this.filters.currency = ''
       this.filters.domestic_cashier_kind = ''
       this.currentPage = 1
@@ -408,6 +412,7 @@ export default {
     },
     handleEditSort(item) {
       this.drawerPayload = {
+        backendState: item.backendState,
         template_id: item.template_id,
         legacy_row_key: item.template_id ? '' : paymentSortRowKey(item),
         method_count: item.method_count,
@@ -433,6 +438,7 @@ export default {
     },
     handleViewSort(item) {
       this.drawerPayload = {
+        backendState: item.backendState,
         template_id: item.template_id,
         legacy_row_key: item.template_id ? '' : paymentSortRowKey(item),
         method_count: item.method_count,
@@ -557,7 +563,7 @@ export default {
       this.fetchList()
     },
     handleDrawerSaved() {
-      this.onSortDrawerClose()
+      if (!this.useRolloutBackend) this.onSortDrawerClose()
       this.fetchList()
     }
   }
@@ -565,6 +571,8 @@ export default {
 </script>
 
 <style scoped>
+.backend-mode-banner { color: #3153a5; background: #eef4ff; border: 1px solid #dce5fc; padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.7; }
+.backend-version { display: block; color: #667085; font-size: 11px; margin-top: 5px; }
 .delete-action { color: #ff4d4f; }
 .page-header {
   display: flex;
