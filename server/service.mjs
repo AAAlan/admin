@@ -101,6 +101,9 @@ export class RolloutService {
     if (!Number.isSafeInteger(expected) || actual !== expected)
       fail(409, 'VERSION_CONFLICT', '配置已变更，请重新读取后操作')
   }
+  emergencyKeys(state, key) {
+    return [key]
+  }
   log(actor, state, action, reason, requestId) {
     this.store.audit(this.key(actor), state.template_id, {
       action,
@@ -255,7 +258,9 @@ export class RolloutService {
           )
         )
           fail(422, 'INVALID_METHOD', '停用目标必须为该模版的业务支付方式')
-        for (const methodId of input.methodIds) {
+        for (const methodId of new Set(
+          input.methodIds.flatMap((key) => this.emergencyKeys(s, key)),
+        )) {
           if (action === 'kill') s.kills[methodId] = true
           else delete s.kills[methodId]
         }

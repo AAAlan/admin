@@ -1,6 +1,6 @@
 # 收银台模版与子渠道功能灰度后端
 
-2026-11-03 · v1.6 · 本地可运行服务，不是生产支付服务。
+2026-11-03 · v1.7 · 本地可运行服务，不是生产支付服务。
 
 ## 启动
 
@@ -26,7 +26,9 @@ npm run dev:full
 
 免密 / 卡功能入口：支付渠道配置 → 展开 PayPal / CARD 渠道 → 编辑子渠道 → 功能开关与灰度 → 保存功能草稿 → 提交审核 → 独立审批发布。与子渠道基础信息分别保存，基础信息仍是 Mock。
 
-子渠道功能归属为 `environment × region × appId × channelId × subchannelId`，内部按 `featureKey` 独立规则；PayPal 为 `paypal_quick`，CARD 为 `card_save` / `card_reuse`。引用同一子渠道的模版共用功能规则，模版不能覆盖；不同账户、子渠道隔离，初始全关闭。关闭免密仅回到标准支付，不关闭方式、不撤销授权。旧场景功能 cohort 不自动迁移。
+子渠道功能归属为 `environment × region × appId × channelId × subchannelId`；PayPal 一条 `paypal_quick`，CARD 只一条 `card_save`，界面名「记住卡信息」。CARD 规则同时控制新保存和已保存卡复用，两动作共用 `card_save` 桶，分别校验产品资格及授权。引用同一子渠道的模版共用功能规则，模版不能覆盖；不同账户、子渠道隔离，初始全关闭。关闭卡信息同时停止两动作但保留普通卡支付、不删除 token；关闭免密保留标准 PayPal、不撤销授权。旧场景功能 cohort 不自动迁移。
+
+旧双规则快照读取不改写，继续按旧规则 / 原桶运行；编辑区沿用原保存规则并提示合并，显式保存、审核发布后才统一。旧待审须撤回 / 驳回后重新保存。新保存 / 发布 / 回滚不接受含 `card_reuse` 的双规则。合并发布须复验复用产品资格（旧复用 cohort 改变也视作扩量）；历史应急覆盖保留，统一卡信息的 kill / resume 同时操作两个动作别名，不能由发布 / 回滚清除。
 
 子渠道功能桶使用 `JSON.stringify(["subchannel-feature-v1", environment, region, appId, channelId, subchannelId, featureKey, "user:" + userId])` 的 UTF-8 FNV1a32 % 10000。模版、订单、比例、版本不入种子；游客不开放保存 / 复用功能。旧独立功能组件不再被正式路由引用；灰度首页只是两个入口的导航。
 
@@ -95,7 +97,7 @@ hit = bucket < round(percentage * 100)
 | `GET /versions`、`audit` | 管理角色；当前资源历史 |
 | `POST /preview` | 管理角色；`{source,document?,profile,eligibleSample,authorizationSample}` |
 
-功能 document 为 `{channel_id,subchannel_id,rules:{paypal_quick:{mode,percentage,countries,platforms,allow,deny}}}`，CARD 则必须同时包含 `card_save` / `card_reuse`。URL 身份覆盖 body 自报身份；归属 / businessMethodId 来自可信注册，不允许伪造。service 凭证不能操作此管理接口，应通过 decisions 获取组合结果。
+功能 document 为 `{channel_id,subchannel_id,rules:{paypal_quick:{mode,percentage,countries,platforms,allow,deny}}}`，CARD 的 rules 只包含 `card_save`，不能再传第二条 `card_reuse` 规则。决策结果仍分别返回 `card_save` / `card_reuse` 执行动作，二者共享运营范围和桶。URL 身份覆盖 body 自报身份；归属 / businessMethodId 来自可信注册，不允许伪造。service 凭证不能操作此管理接口，应通过 decisions 获取组合结果。
 
 ## 非演示服务与可信适配器
 

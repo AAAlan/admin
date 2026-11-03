@@ -8,18 +8,20 @@ export const subchannelFeatureCatalog = {
   },
   card_save: {
     name: '记住卡信息',
-    description: '控制新卡保存邀请；用户仍需主动同意，不影响本单普通卡支付。',
+    description:
+      '统一控制新卡保存和已保存卡复用。保存需用户主动同意，复用需有效授权及 token；关闭不删卡，不影响普通卡支付。',
   },
   card_reuse: {
     name: '使用已保存的卡',
-    description: '仅复用属于当前用户的有效 token，与新的保存邀请独立。',
+    description:
+      '记住卡信息下的复用动作，仅使用属于当前用户的有效授权及 token。',
   },
 }
 export const subchannelFeatureKeys = (businessId) =>
   businessId === 'paypal'
     ? ['paypal_quick']
     : businessId === 'card'
-      ? ['card_save', 'card_reuse']
+      ? ['card_save']
       : []
 export const closedFeatureRule = () => ({
   mode: 'off',
@@ -75,6 +77,43 @@ export function canonicalFeatureRules(rules, keys, region = 'overseas') {
     }),
   )
 }
+
+// Read old snapshots without rewriting them. Only an explicit draft save/release
+// replaces separate legacy rules with the single card_save control.
+export function editableFeatureDocument(document, region = 'overseas') {
+  const legacy =
+    document.business_method_id === 'card' &&
+    Object.hasOwn(document.rules || {}, 'card_reuse')
+  const keys = legacy
+    ? ['card_save', 'card_reuse']
+    : subchannelFeatureKeys(document.business_method_id)
+  const rules = canonicalFeatureRules(document.rules, keys, region)
+  return {
+    ...document,
+    rules: Object.fromEntries(
+      subchannelFeatureKeys(document.business_method_id).map((key) => [
+        key,
+        rules[key],
+      ]),
+    ),
+  }
+}
+
+// One operational rule; two execution actions with different hard prerequisites.
+// Legacy published snapshots keep their original rules and cohorts until release.
+export function subchannelActionRules(document) {
+  if (document.rules.card_save && !document.rules.card_reuse)
+    return ['card_save', 'card_reuse'].map((key) => ({
+      key,
+      controlKey: 'card_save',
+      rule: document.rules.card_save,
+    }))
+  return Object.entries(document.rules).map(([key, rule]) => ({
+    key,
+    controlKey: key,
+    rule,
+  }))
+}
 export function subchannelFeatureBucket(scope, resource, feature, userId) {
   const seed = JSON.stringify([
     'subchannel-feature-v1',
@@ -98,17 +137,21 @@ export function evaluateSubchannelFeatures(
   facts = {},
   { published = true, kills = {} } = {},
 ) {
-  return Object.entries(document.rules).map(([key, rule]) => {
+  return subchannelActionRules(document).map(({ key, controlKey, rule }) => {
     const userId = typeof profile.userId === 'string' ? profile.userId : ''
     const bucket = userId.trim()
-      ? subchannelFeatureBucket(scope, document, key, userId)
+      ? subchannelFeatureBucket(scope, document, controlKey, userId)
       : null
     let code = 'BUCKET_MISS',
       reason = '未命中灰度比例'
     if (!published) {
       code = 'NOT_PUBLISHED'
       reason = '功能尚未发布，使用标准支付'
-    } else if (kills[key]) {
+    } else if (
+      kills[key] ||
+      kills[controlKey] ||
+      (controlKey === 'card_save' && kills.card_reuse)
+    ) {
       code = 'EMERGENCY_STOP'
       reason = '功能紧急停用，使用标准支付'
     } else if (rule.mode === 'off') {
@@ -164,7 +207,12 @@ export function evaluateSubchannelFeatures(
     }
     return {
       key,
-      name: subchannelFeatureCatalog[key].name,
+      name:
+        key === 'card_save'
+          ? '记住卡信息 · 新卡保存'
+          : key === 'card_reuse'
+            ? '记住卡信息 · 已保存卡复用'
+            : subchannelFeatureCatalog[key].name,
       bucket,
       hit: ['ALLOW', 'ALL', 'BUCKET_HIT'].includes(code),
       code,

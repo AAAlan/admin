@@ -40,6 +40,31 @@ try {
   const { default: Home } = await server.ssrLoadModule(
     '/src/views/payment/PaymentRolloutHome.vue',
   )
+  const { default: Release } = await server.ssrLoadModule(
+    '/src/views/payment/TemplateRolloutRelease.vue',
+  )
+  const release = vmFor(Release, { featureResource: true })
+  release.state = {
+    draft: { rules: { card_save: { mode: 'off' } } },
+    kills: { card_reuse: true },
+  }
+  release.methodId = 'card_save'
+  assert.deepEqual(release.methodIds, ['card_save'])
+  assert.deepEqual(release.emergencyLabels, ['记住卡信息'])
+  assert.equal(
+    release.selectedEmergencyStopped,
+    true,
+    'Unified control must allow explicitly resuming legacy reuse-only emergency coverage',
+  )
+  release.state.kills = {}
+  assert.equal(release.selectedEmergencyStopped, false)
+  release.featureResource = false
+  release.state.kills = { card_reuse: true }
+  assert.equal(
+    release.selectedEmergencyStopped,
+    false,
+    'Ordinary template methods do not inherit feature aliases',
+  )
   const channels = vmFor(Channels)
   channels.handleEditSubchannel(
     { channel_id: 'account_b', pay_name: 'PayPal B' },
@@ -82,13 +107,10 @@ try {
   const reopened = vmFor(Panel, props)
   await reopened.load()
   assert.equal(reopened.draft.rules.paypal_quick.allow, 'pilot_user')
-  await reopened.preview()
-  assert.equal(reopened.results[0].code, 'ALLOW')
-  assert.equal(reopened.previewStale, false)
-  reopened.authorizationSample = false
-  assert.equal(reopened.previewStale, true)
-  await reopened.preview()
-  assert.equal(reopened.results[0].code, 'AUTHORIZATION_REQUIRED')
+  assert.equal(reopened.draft.rules.paypal_quick.percentage, 0)
+  assert.deepEqual(reopened.draft.rules.paypal_quick.platforms, ['apple'])
+  assert.equal(Panel.methods.preview, undefined)
+  assert.equal(Object.hasOwn(reopened, 'profile'), false)
   reopened.draft.rules.paypal_quick.percentage = 100.001
   reopened.draft.rules.paypal_quick.mode = 'off'
   reopened.normalizeInactivePercentage('paypal_quick')
@@ -123,6 +145,78 @@ try {
   assert.equal(other.draft, null)
   assert(other.error.includes('不支持'))
 
+  const cardProps = { ...props, subchannelId: '3', businessMethodId: 'card' }
+  const cardPanel = vmFor(Panel, cardProps)
+  await cardPanel.load()
+  assert.deepEqual(cardPanel.featureKeys, ['card_save'])
+  const legacyCard = {
+    ...cardPanel.document,
+    rules: {
+      card_save: { ...cardPanel.draft.rules.card_save, mode: 'all' },
+      card_reuse: { ...cardPanel.draft.rules.card_save },
+    },
+  }
+  storage.set(cardPanel.localKey, JSON.stringify(legacyCard))
+  const legacyStorage = storage.get(cardPanel.localKey)
+  await cardPanel.load()
+  assert.equal(cardPanel.legacyCardRules, true)
+  assert.equal(
+    cardPanel.dirty,
+    true,
+    'Legacy consolidation requires an explicit save',
+  )
+  assert.equal(storage.get(cardPanel.localKey), legacyStorage)
+  await cardPanel.save()
+  assert.deepEqual(
+    Object.keys(JSON.parse(storage.get(cardPanel.localKey)).rules),
+    ['card_save'],
+  )
+  assert.equal(cardPanel.legacyCardRules, false)
+  const singleControl = {
+    ...Panel,
+    watch: {},
+    data() {
+      return {
+        ...Panel.data.call(this),
+        draft: cardPanel.document,
+        countryTexts: { card_save: '' },
+        role: 'editor',
+      }
+    },
+  }
+  const cardHtml = await renderToString(createSSRApp(singleControl, cardProps))
+  assert.equal(
+    (cardHtml.match(/<legend(?:\s|>)/g) || []).length,
+    1,
+    'CARD renders exactly one control',
+  )
+  assert.equal((cardHtml.match(/type="radio"/g) || []).length, 3)
+  assert(!cardHtml.includes('使用已保存的卡'))
+  for (const [panelProps, document, countryTexts] of [
+    [cardProps, cardPanel.document, { card_save: '' }],
+    [props, reopened.document, { paypal_quick: '' }],
+  ]) {
+    const noPreviewPanel = {
+      ...singleControl,
+      data() {
+        return {
+          ...Panel.data.call(this),
+          draft: document,
+          countryTexts,
+          role: 'editor',
+        }
+      },
+    }
+    const html = await renderToString(createSSRApp(noPreviewPanel, panelProps))
+    assert(!html.includes('功能效果试算'))
+    assert(!html.includes('试算功能效果'))
+    assert(!html.includes('试算来源'))
+    assert(!html.includes('sample-fields'))
+    assert(html.includes('高级设置'))
+    assert(html.includes('保存本机功能规则'))
+    assert(html.includes('重新读取功能配置'))
+  }
+
   const homeApp = createSSRApp(Home).component('RouterLink', {
     props: ['to'],
     setup(props, { slots }) {
@@ -147,7 +241,7 @@ try {
     !routeSource.includes("import('@/views/payment/PaymentRolloutDemo.vue')"),
   )
   console.log(
-    'Passed: parent binding, stable resource identity, Mock save/reopen/unsaved isolation/readonly/invalid storage, authorization preview, and navigation-only rollout home.',
+    'Passed: parent binding, Mock persistence/isolation/readonly, single card control, explicit legacy consolidation, no feature preview for CARD/PayPal, and navigation-only home.',
   )
 } finally {
   await server.close()

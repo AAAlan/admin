@@ -8,9 +8,7 @@
     </header>
     <p>
       归属：{{ channelName }} / 子渠道
-      {{
-        subchannelId
-      }}。免密仅控制快捷体验，支付方式是否展示仍由收银台模版决定。
+      {{ subchannelId }}。本区控制支付体验，支付方式是否展示仍由收银台模版决定。
     </p>
     <p class="scope-note">
       引用此子渠道的所有模版共用功能规则；切换渠道或子渠道不会共用用户桶。渠道基础信息仍为
@@ -18,6 +16,13 @@
     </p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <template v-if="draft">
+      <p
+        v-if="legacyCardRules || state?.published?.rules.card_reuse"
+        class="scope-note"
+        role="status"
+      >
+        卡信息已合并为一个开关，上方沿用原保存规则。保存并审核发布后，新卡保存和历史卡复用将统一使用此范围与用户桶；已有生效配置暂不改变。旧待审需撤回或驳回后重新保存。
+      </p>
       <fieldset
         v-for="key in featureKeys"
         :key="key"
@@ -108,68 +113,6 @@
         ><span v-if="dirty">未保存</span>
       </div>
       <p v-if="notice" role="status" class="success">{{ notice }}</p>
-      <details class="preview">
-        <summary>功能效果试算</summary>
-        <p>
-          仅模拟，不发起支付。复用功能还需有效授权及
-          token；支付机构仍可要求验证。
-        </p>
-        <label v-if="useBackend"
-          >试算来源<select v-model="source" aria-label="试算来源">
-            <option value="preview">当前编辑内容</option>
-            <option value="published">已发布功能版本</option>
-          </select></label
-        >
-        <div class="sample-fields">
-          <label>用户 ID<input v-model="profile.userId" /></label
-          ><label
-            >用户 platform<select v-model="profile.platform">
-              <option v-for="platform in platforms" :key="platform">
-                {{ platform }}
-              </option>
-            </select></label
-          ><label
-            >国家代码<input v-model="profile.country" maxlength="2"
-          /></label>
-        </div>
-        <label class="sample-check"
-          ><input
-            v-model="eligibleSample"
-            type="checkbox"
-          />模版已展示此方式，且本单 / 机构资格通过（样本）</label
-        >
-        <label class="sample-check"
-          ><input
-            v-model="authorizationSample"
-            type="checkbox"
-          />当前用户有效授权及 token（样本，仅复用功能需要）</label
-        >
-        <button
-          type="button"
-          class="btn btn-secondary"
-          :disabled="previewBusy"
-          @click="preview"
-        >
-          {{ previewBusy ? '试算中…' : '试算功能效果' }}
-        </button>
-        <p v-if="previewError" role="alert" class="error">{{ previewError }}</p>
-        <p v-if="results.length && previewStale" role="status">
-          参数已变化，请重新试算。
-        </p>
-        <div
-          v-for="result in previewStale ? [] : results"
-          :key="result.key"
-          class="preview-result"
-        >
-          <strong
-            >{{ result.name }} ·
-            {{ result.hit ? '提供此体验' : '不提供此体验' }}</strong
-          ><span
-            >{{ result.reason
-            }}{{ result.bucket === null ? '' : ` · 桶 ${result.bucket}` }}</span
-          >
-        </div>
-      </details>
       <TemplateRolloutRelease
         v-if="useBackend && state"
         :template-id="state.template_id"
@@ -203,7 +146,7 @@ import {
   subchannelFeatureKeys,
   closedFeatureRule,
   canonicalFeatureRules,
-  evaluateSubchannelFeatures,
+  editableFeatureDocument,
 } from '@/utils/subchannelRollout.js'
 import { getPlatformOptions } from '@/utils/platformOptions.js'
 import { templateRuleErrors } from '@/utils/templatePaymentRollout.js'
@@ -226,6 +169,7 @@ export default {
       baseDraftRevision: 0,
       countryTexts: {},
       original: '',
+      legacyCardRules: false,
       busy: false,
       error: '',
       notice: '',
@@ -238,19 +182,6 @@ export default {
         { value: 'gradual', label: '灰度' },
         { value: 'all', label: '全量' },
       ],
-      profile: {
-        userId: 'pilot_user',
-        country: 'US',
-        platform: 'apple',
-        riskAllowed: true,
-      },
-      eligibleSample: true,
-      authorizationSample: true,
-      source: 'preview',
-      results: [],
-      previewError: '',
-      previewBusy: false,
-      previewSignature: '',
     }
   },
   computed: {
@@ -302,26 +233,13 @@ export default {
     dirty() {
       return (
         !!this.draft &&
-        ((this.useBackend && this.state?.draftRevision === 0) ||
+        (this.legacyCardRules ||
+          (this.useBackend && this.state?.draftRevision === 0) ||
           JSON.stringify(this.document) !== this.original)
       )
     },
     canEdit() {
       return !this.readonly && this.role === 'editor' && !this.state?.pending
-    },
-    signature() {
-      return JSON.stringify([
-        this.document,
-        this.profile,
-        this.eligibleSample,
-        this.authorizationSample,
-        this.source,
-        this.state?.revision,
-        this.state?.emergencyEpoch,
-      ])
-    },
-    previewStale() {
-      return this.previewSignature !== this.signature
     },
   },
   watch: {
@@ -348,9 +266,12 @@ export default {
       }
     },
     syncDocument(document) {
-      this.draft = JSON.parse(JSON.stringify(document))
+      this.legacyCardRules = Object.hasOwn(document.rules || {}, 'card_reuse')
+      this.draft = JSON.parse(
+        JSON.stringify(editableFeatureDocument(document, this.region)),
+      )
       this.countryTexts = Object.fromEntries(
-        Object.entries(document.rules).map(([key, rule]) => [
+        Object.entries(this.draft.rules).map(([key, rule]) => [
           key,
           rule.countries.join(', '),
         ]),
@@ -362,7 +283,6 @@ export default {
       this.error = ''
       this.notice = ''
       this.busy = true
-      this.results = []
       try {
         if (this.useBackend) {
           const session = await backendSession(),
@@ -382,12 +302,7 @@ export default {
               this.featureKeys.map((key) => [key, closedFeatureRule()]),
             ),
           }
-          if (raw)
-            document.rules = canonicalFeatureRules(
-              JSON.parse(raw).rules,
-              this.featureKeys,
-              this.region,
-            )
+          if (raw) document.rules = JSON.parse(raw).rules
           this.role = 'editor'
           this.syncDocument(document)
         }
@@ -441,64 +356,6 @@ export default {
         this.error = `${e.message}${e.code ? `（${e.code}）` : ''}`
       } finally {
         this.busy = false
-      }
-    },
-    async preview() {
-      this.previewError = ''
-      this.previewBusy = true
-      this.results = []
-      const signature = this.signature
-      try {
-        const document =
-          this.source === 'published' && this.useBackend
-            ? undefined
-            : {
-                ...this.document,
-                rules: canonicalFeatureRules(
-                  this.document.rules,
-                  this.featureKeys,
-                  this.region,
-                ),
-              }
-        if (this.useBackend) {
-          if (!this.state.draftRevision)
-            throw new Error('首次保存功能草稿后可服务端试算')
-          const result = await rolloutRequest(`${this.resourcePath}/preview`, {
-            method: 'POST',
-            body: {
-              source: this.source,
-              document,
-              profile: {
-                ...this.profile,
-                country: this.profile.country.toUpperCase(),
-              },
-              eligibleSample: this.eligibleSample,
-              authorizationSample: this.authorizationSample,
-            },
-          })
-          this.results = result.data.results
-        } else
-          this.results = evaluateSubchannelFeatures(
-            document,
-            { environment: 'demo', region: this.region, appId: 'saki' },
-            { ...this.profile, country: this.profile.country.toUpperCase() },
-            {
-              parentAllowed: this.eligibleSample,
-              channelEnabled: true,
-              subchannelEnabled: true,
-              ready: Object.fromEntries(this.featureKeys.map((k) => [k, true])),
-              eligibility: Object.fromEntries(
-                this.featureKeys.map((k) => [k, this.eligibleSample]),
-              ),
-              tokenValid: this.authorizationSample,
-              consentValid: this.authorizationSample,
-            },
-          )
-        this.previewSignature = signature
-      } catch (e) {
-        this.previewError = e.message
-      } finally {
-        this.previewBusy = false
       }
     },
   },
@@ -561,7 +418,6 @@ legend {
   padding: 10px 16px;
 }
 input:not([type='radio']):not([type='checkbox']),
-select,
 textarea {
   border: 1px solid #d0d5dd;
   border-radius: 5px;
@@ -594,36 +450,10 @@ summary {
   gap: 6px;
   margin: 12px 0;
 }
-.platforms label,
-.sample-check {
+.platforms label {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-.sample-check {
-  margin: 12px 0;
-}
-.preview {
-  border-top: 1px solid #eaecf0;
-  margin-top: 18px;
-  padding-top: 10px;
-}
-.sample-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr 0.7fr;
-  gap: 12px;
-  margin-top: 12px;
-}
-.sample-fields label {
-  display: grid;
-  gap: 6px;
-}
-.preview-result {
-  display: grid;
-  gap: 6px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eaecf0;
-  overflow-wrap: anywhere;
 }
 .error {
   color: #ae4328;
@@ -634,9 +464,6 @@ summary {
 @media (max-width: 640px) {
   .subchannel-features {
     padding: 12px;
-  }
-  .sample-fields {
-    grid-template-columns: 1fr;
   }
   .mode-options {
     gap: 6px;

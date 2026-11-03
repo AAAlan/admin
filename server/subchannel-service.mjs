@@ -6,6 +6,7 @@ import {
   closedFeatureRule,
   canonicalFeatureRules,
   evaluateSubchannelFeatures,
+  subchannelActionRules,
 } from '../src/utils/subchannelRollout.js'
 
 export const featureResourceId = (channelId, subchannelId) =>
@@ -61,6 +62,13 @@ export class SubchannelRolloutService extends RolloutService {
     if (featureResourceId(resource.channel_id, resource.subchannel_id) !== id)
       fail(422, 'RESOURCE_MISMATCH', '不能修改规则所属渠道或子渠道')
     try {
+      if (
+        resource.business_method_id === 'card' &&
+        Object.hasOwn(input.rules || {}, 'card_reuse')
+      )
+        throw new Error(
+          '卡信息已合并为单一开关，请重新保存统一草稿并审核发布；不再发布或回滚旧分离规则',
+        )
       return {
         resource_type: 'subchannel-features',
         channel_id: resource.channel_id,
@@ -108,11 +116,21 @@ export class SubchannelRolloutService extends RolloutService {
   }
   checkReadiness(actor, before, after) {
     const resource = this.resource(actor, after.channel_id, after.subchannel_id)
-    for (const [key, rule] of Object.entries(after.rules)) {
+    this.document(
+      after,
+      actor,
+      featureResourceId(after.channel_id, after.subchannel_id),
+    )
+    for (const { key, rule } of subchannelActionRules(after)) {
+      const oldRule = subchannelActionRules(before || { rules: {} }).find(
+        (action) => action.key === key,
+      )?.rule
+      const changedReuseCohort =
+        key === 'card_reuse' && !!before?.rules.card_reuse
       if (
         rule.mode === 'off' ||
         (rule.mode === 'gradual' && rule.percentage === 0 && !rule.allow) ||
-        ruleIsNarrowing(before?.rules[key], rule)
+        (!changedReuseCohort && ruleIsNarrowing(oldRule, rule))
       )
         continue
       if (
@@ -126,6 +144,11 @@ export class SubchannelRolloutService extends RolloutService {
           '渠道 / 子渠道未启用，或该免密、保存产品尚未就绪，不能新增或扩量',
         )
     }
+  }
+  emergencyKeys(state, key) {
+    return ['card_save', 'card_reuse'].includes(key)
+      ? ['card_save', 'card_reuse']
+      : [key]
   }
   preview(actor, id, input) {
     this.requireRole(actor, ['editor', 'reviewer', 'viewer', 'emergency'])
@@ -152,13 +175,13 @@ export class SubchannelRolloutService extends RolloutService {
           channelEnabled: resource.channel_enabled === true,
           subchannelEnabled: resource.enabled === true,
           ready: Object.fromEntries(
-            Object.keys(document.rules).map((key) => [
+            subchannelActionRules(document).map(({ key }) => [
               key,
               this.featureCapabilityReader(actor.scope, resource, key) === true,
             ]),
           ),
           eligibility: Object.fromEntries(
-            Object.keys(document.rules).map((key) => [
+            subchannelActionRules(document).map(({ key }) => [
               key,
               input.eligibleSample === true,
             ]),
@@ -194,7 +217,7 @@ export class SubchannelRolloutService extends RolloutService {
     let ready
     try {
       ready = Object.fromEntries(
-        Object.keys(document.rules).map((key) => [
+        subchannelActionRules(document).map(({ key }) => [
           key,
           this.featureCapabilityReader(actor.scope, resource, key) === true,
         ]),

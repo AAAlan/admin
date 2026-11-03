@@ -2,10 +2,12 @@ import assert from 'node:assert/strict'
 import { test, before, after } from 'node:test'
 import { RolloutStore } from '../server/store.mjs'
 import { createRolloutServer } from '../server/http.mjs'
+import { featureResourceId } from '../server/subchannel-service.mjs'
 import {
   subchannelFeatureBucket,
   evaluateSubchannelFeatures,
   closedFeatureRule,
+  editableFeatureDocument,
 } from '../src/utils/subchannelRollout.js'
 
 const scope = { environment: 'test', region: 'overseas', appId: 'feature-app' }
@@ -61,9 +63,11 @@ const pathFor = (resource) =>
 const paypal = pathFor(registry[0]),
   card = pathFor(registry[2])
 let store,
+  featureService,
   server,
   base,
   ready = true,
+  reuseReady = true,
   trusted,
   templateId
 const all = () => ({ ...closedFeatureRule(), mode: 'all' })
@@ -80,9 +84,11 @@ before(async () => {
             (r) => r.channel_id === channel && r.subchannel_id === id,
           )
         : null,
-    featureCapabilityReader: () => ready,
+    featureCapabilityReader: (scope, resource, key) =>
+      ready && (key !== 'card_reuse' || reuseReady),
   })
   server = app.server
+  featureService = app.features
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
   base = `http://127.0.0.1:${server.address().port}/api/rollout`
 })
@@ -209,11 +215,11 @@ test('feature drafts, CAS and approval are isolated from other accounts, subchan
   assert.equal(withoutAuth.results[0].code, 'AUTHORIZATION_REQUIRED')
 })
 
-test('card saving and reuse remain separate, and sibling card-brand subchannels do not share configuration', async () => {
+test('one card control drives saving and reuse with shared cohorts, separate prerequisites and sibling isolation', async () => {
   const state = await save(card, {
     card_save: all(),
-    card_reuse: closedFeatureRule(),
   })
+  assert.deepEqual(Object.keys(state.draft.rules), ['card_save'])
   await submit(card)
   await approve(card)
   const result = await api(`${card}/preview`, {
@@ -226,11 +232,155 @@ test('card saving and reuse remain separate, and sibling card-brand subchannels 
   })
   assert(result.results.find((r) => r.key === 'card_save').hit)
   assert.equal(result.results.find((r) => r.key === 'card_reuse').hit, false)
+  const authorized = await api(`${card}/preview`, {
+    body: {
+      source: 'published',
+      profile: { userId: 'pilot_user', riskAllowed: true },
+      eligibleSample: true,
+      authorizationSample: true,
+    },
+  })
+  assert(authorized.results.every((r) => r.hit))
+  assert.equal(authorized.results[0].bucket, authorized.results[1].bucket)
+  reuseReady = false
+  const productMissing = await api(`${card}/preview`, {
+    body: {
+      source: 'published',
+      profile: { userId: 'pilot_user', riskAllowed: true },
+      eligibleSample: true,
+      authorizationSample: true,
+    },
+  })
+  assert(productMissing.results.find((r) => r.key === 'card_save').hit)
+  assert.equal(
+    productMissing.results.find((r) => r.key === 'card_reuse').code,
+    'INELIGIBLE',
+  )
+  reuseReady = true
+  const invalid = {
+    ...state.draft,
+    rules: { ...state.draft.rules, card_reuse: all() },
+  }
+  await api(`${card}/draft`, {
+    body: { baseDraftRevision: state.draftRevision, document: invalid },
+    status: 422,
+  })
+  await save(card, { card_save: closedFeatureRule() })
+  await submit(card)
+  await approve(card)
+  const closed = await api(`${card}/preview`, {
+    body: {
+      source: 'published',
+      profile: { userId: 'pilot_user', riskAllowed: true },
+      eligibleSample: true,
+      authorizationSample: true,
+    },
+  })
+  assert(closed.results.every((r) => r.code === 'FEATURE_OFF'))
   assert.equal(
     (await api(pathFor(registry[3]))).draft.rules.card_save.mode,
     'off',
   )
   assert.equal(state.draft.business_method_id, 'card')
+})
+
+test('legacy split snapshots stay unchanged until explicit unified release, preserve kills and cannot be silently rolled back', async () => {
+  const resource = registry[3],
+    path = pathFor(resource)
+  const actor = principals[0],
+    id = featureResourceId(resource.channel_id, resource.subchannel_id)
+  const legacy = {
+    ...resource,
+    rules: { card_save: all(), card_reuse: closedFeatureRule() },
+  }
+  store.transaction(() => {
+    store.put(featureService.key(actor), {
+      template_id: id,
+      draft: legacy,
+      published: legacy,
+      draftRevision: 1,
+      revision: 1,
+      pending: null,
+      kills: { card_reuse: true },
+      emergencyEpoch: 1,
+    })
+    store.version(featureService.key(actor), id, 1, legacy)
+  })
+  const before = await api(path)
+  assert.deepEqual(before.published.rules, legacy.rules)
+  const unified = editableFeatureDocument(before.draft)
+  assert.deepEqual(Object.keys(unified.rules), ['card_save'])
+  assert.deepEqual(
+    before.published.rules,
+    legacy.rules,
+    'Reading must not mutate legacy snapshots',
+  )
+  await api(`${path}/draft`, {
+    body: { baseDraftRevision: 1, document: unified },
+  })
+  assert.deepEqual(
+    (await api(path)).published.rules,
+    legacy.rules,
+    'Draft save is not a release',
+  )
+  reuseReady = false
+  const current = await api(path)
+  await api(`${path}/submit`, {
+    body: {
+      draftRevision: current.draftRevision,
+      baseRevision: 1,
+      reason: '合并卡开关需要重新验证复用资格',
+    },
+    status: 422,
+  })
+  reuseReady = true
+  await submit(path)
+  await approve(path)
+  const released = await api(path)
+  assert.deepEqual(Object.keys(released.published.rules), ['card_save'])
+  assert(
+    released.kills.card_reuse,
+    'Publishing cannot clear old emergency coverage',
+  )
+  const preview = () =>
+    api(`${path}/preview`, {
+      body: {
+        source: 'published',
+        profile: { userId: 'pilot_user', riskAllowed: true },
+        eligibleSample: true,
+        authorizationSample: true,
+      },
+    })
+  assert((await preview()).results.every((r) => r.code === 'EMERGENCY_STOP'))
+  await api(`${path}/resume`, {
+    role: 'emergency',
+    body: {
+      methodIds: ['card_save'],
+      emergencyEpoch: released.emergencyEpoch,
+      reason: '显式恢复统一卡信息能力',
+    },
+  })
+  assert((await preview()).results.every((r) => r.hit))
+  const after = await api(path)
+  await api(`${path}/rollback`, {
+    role: 'reviewer',
+    body: {
+      targetRevision: 1,
+      baseRevision: after.revision,
+      baseDraftRevision: after.draftRevision,
+      reason: '不能重新引入旧分离规则',
+    },
+    status: 422,
+  })
+  await api(`${path}/kill`, {
+    role: 'emergency',
+    body: {
+      methodIds: ['card_save'],
+      emergencyEpoch: after.emergencyEpoch,
+      reason: '统一停用保存与复用',
+    },
+  })
+  assert((await preview()).results.every((r) => r.code === 'EMERGENCY_STOP'))
 })
 
 test('feature user buckets are independent of templates and monotonic; parent, platform and authorization take precedence', () => {

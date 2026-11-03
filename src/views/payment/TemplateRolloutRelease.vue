@@ -121,7 +121,9 @@
           <label
             >{{ featureResource ? '子渠道功能' : '业务支付方式' }}
             <select v-model="methodId">
-              <option v-for="id in methodIds" :key="id">{{ id }}</option>
+              <option v-for="id in methodIds" :key="id" :value="id">
+                {{ featureResource ? featureLabels[id] || id : id }}
+              </option>
             </select></label
           ><button
             class="btn btn-secondary"
@@ -131,7 +133,7 @@
             紧急停用</button
           ><button
             class="btn btn-secondary"
-            :disabled="busy || !state.kills[methodId]"
+            :disabled="busy || !selectedEmergencyStopped"
             @click="act('resume')"
           >
             显式恢复
@@ -139,7 +141,7 @@
         </div>
         <p>
           当前应急覆盖：{{
-            Object.keys(state.kills).join('、') || '无'
+            emergencyLabels.join('、') || '无'
           }}。回滚不会解除覆盖。
         </p>
         <ol class="audit-list">
@@ -161,6 +163,7 @@ import {
   rolloutRequest,
   switchBackendRole,
 } from '@/api/rolloutBackend.js'
+import { subchannelFeatureCatalog } from '@/utils/subchannelRollout.js'
 const labels = {
   submit: '已提交独立审核，生效版本未变化',
   approve: '审核通过，服务端生效版本已更新',
@@ -196,6 +199,33 @@ export default {
     }
   },
   computed: {
+    selectedEmergencyStopped() {
+      const keys =
+        this.featureResource && this.methodId === 'card_save'
+          ? ['card_save', 'card_reuse']
+          : [this.methodId]
+      return keys.some((key) => this.state?.kills?.[key])
+    },
+    featureLabels() {
+      return Object.fromEntries(
+        Object.entries(subchannelFeatureCatalog).map(([key, feature]) => [
+          key,
+          feature.name,
+        ]),
+      )
+    },
+    emergencyLabels() {
+      const ids = [
+        ...new Set(
+          Object.keys(this.state?.kills || {}).map((id) =>
+            this.featureResource && id === 'card_reuse' ? 'card_save' : id,
+          ),
+        ),
+      ]
+      return ids.map((id) =>
+        this.featureResource ? this.featureLabels[id] || id : id,
+      )
+    },
     basePath() {
       return this.resourcePath || `/templates/${this.templateId}`
     },
@@ -205,7 +235,7 @@ export default {
           ...Object.keys(this.state?.draft.rules || {}),
           ...Object.keys(this.state?.published?.rules || {}),
         ]),
-      ]
+      ].filter((id) => !this.featureResource || id !== 'card_reuse')
     },
     changes() {
       if (!this.state) return []
